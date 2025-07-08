@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Assistant</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f8f9fa;
+        }
+        .container {
+            text-align: center;
+        }
+        .card {
+            margin: 20px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            border: none;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+        .card-body {
+            padding: 40px 20px;
+        }
+        .card-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #007bff;
+        }
+        .card-text {
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-5 text-primary">Welcome to Your Medical Assistant</h1>
+        <div class="row justify-content-center">
+            <div class="col-md-5">
+                <a href="/chatbot" class="card-link">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Medical Chatbot</h5>
+                            <p class="card-text">Ask health-related questions and get general information.</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-5">
+                <a href="/reminders" class="card-link">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Pill Reminders</h5>
+                            <p class="card-text">Set and manage your medication reminders.</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

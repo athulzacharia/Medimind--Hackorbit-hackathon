@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pill Reminders</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        /* Embedded styles for reminder page. Ensure these are compatible with your global styles. */
+        body { padding-top: 20px; }
+        .pill-reminder-section {
+            background: rgba(50, 50, 90, 0.8);
+            padding: 15px 20px;
+            margin-bottom: 20px; /* Increased margin for better spacing */
+            border-radius: 15px;
+            border: 1px solid rgba(120, 120, 180, 0.4);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            color: #f0f0f0;
+        }
+        .card-header {
+            background-color: rgba(60, 60, 100, 0.9);
+            border-bottom: 1px solid rgba(120, 120, 180, 0.4);
+            color: #f0f0f0;
+        }
+        .reminder-item {
+            background: rgba(40, 40, 80, 0.9); /* Slightly darker for individual items */
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            border-radius: 10px; /* Slightly smaller border-radius for items */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(100, 100, 160, 0.3);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: transform 0.2s ease;
+            color: #f0f0f0;
+        }
+        .reminder-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+        }
+        .reminder-item p {
+            margin: 0;
+            line-height: 1.4;
+            flex-grow: 1; /* Allow text to take available space */
+        }
+        .reminder-item p strong {
+            color: #00ffff;
+        }
+        .delete-reminder-btn {
+            margin-left: 15px;
+            flex-shrink: 0;
+        }
+        .no-reminders-msg {
+            padding: 20px;
+            border: 1px dashed #ced4da;
+            border-radius: 5px;
+            color: rgba(255,255,255,0.6) !important;
+            background-color: rgba(20, 20, 40, 0.6);
+        }
+        .notification-area {
+            /* Basic styling for notifications */
+            margin-top: 20px;
+            max-height: 200px; /* Limit height to prevent overflow */
+            overflow-y: auto; /* Enable scrolling if many notifications */
+        }
+        .notification-message {
+            margin-bottom: 10px;
+            animation: fadeIn 0.5s ease-out;
+        }
+        .notification-message.fade-out {
+            animation: fadeOut 0.5s ease-in forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(10px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="aurora-secondary"></div>
+
+    <div class="container my-4">
+        <h1 class="text-center mb-4 text-primary">Pill Reminders</h1>
+
+        <div id="notificationArea" class="notification-area mb-3">
+        </div>
+
+        <div class="card mb-4 pill-reminder-section shadow">
+            <div class="card-header">Add New Reminder</div>
+            <div class="card-body">
+                <form id="add-reminder-form">
+                    <div class="form-group">
+                        <label for="medicationName">Medication Name:</label>
+                        <input type="text" class="form-control" id="medicationName" placeholder="e.g., Ibuprofen" aria-label="Medication Name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="dosage">Dosage (optional):</label>
+                        <input type="text" class="form-control" id="dosage" placeholder="e.g., 200mg" aria-label="Dosage (optional)">
+                    </div>
+                    <div class="form-group">
+                        <label for="reminderTime">Time (HH:MM 24hr):</label>
+                        <input type="time" class="form-control" id="reminderTime" aria-label="Reminder Time (24-hour format)" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="frequency">Frequency:</label>
+                        <select class="form-control" id="frequency" aria-label="Reminder Frequency" required>
+                            <option value="daily">Daily</option>
+                            <option value="monday,tuesday,wednesday,thursday,friday,saturday,sunday">Everyday (Mon-Sun)</option>
+                            <option value="monday,wednesday,friday">Monday, Wednesday, Friday</option>
+                            <option value="tuesday,thursday,saturday">Tuesday, Thursday, Saturday</option>
+                            <option value="once">Once (next occurrence)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-success btn-block mt-3">Add Reminder</button>
+                </form>
+            </div>
+        </div>
+
+        <h4 class="mb-3">Your Reminders:</h4>
+        <div id="remindersList" class="reminders-list">
+            {% if reminders %}
+                {% for reminder in reminders %}
+                <div class="reminder-item" data-id="{{ reminder.id }}">
+                    <p><strong>{{ reminder.medication_name }}</strong> {% if reminder.dosage %}({{ reminder.dosage }}){% endif %}<br>Time: {{ reminder.time_str }} | Frequency: {{ reminder.frequency | format_frequency }}</p>
+                    <button class="btn btn-danger btn-sm delete-reminder-btn" data-id="{{ reminder.id }}">Delete</button>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-center text-muted no-reminders-msg">No reminders set yet.</p>
+            {% endif %}
+        </div>
+
+        <p class="text-center mt-4"><a href="/" class="btn btn-secondary">Go Back to Home</a></p>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
