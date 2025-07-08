@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MediMind Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .dashboard-main {
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .welcome-section {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 15px;
+      margin-bottom: 30px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .quick-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .stat-card h3 {
+      margin: 0 0 10px 0;
+      color: #00f0ff;
+      font-size: 1.1em;
+    }
+
+    .stat-card .value {
+      font-size: 2em;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+
+    .stat-card .trend {
+      font-size: 0.9em;
+      opacity: 0.8;
+    }
+
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .action-btn {
+      background: linear-gradient(135deg, #00f0ff, #0080ff);
+      border: none;
+      padding: 15px 20px;
+      border-radius: 10px;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      text-align: center;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 240, 255, 0.4);
+    }
+
+    .action-btn.secondary {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+
+    .action-btn.success {
+      background: linear-gradient(135deg, #2ecc71, #27ae60);
+    }
+
+    .action-btn.warning {
+      background: linear-gradient(135deg, #f39c12, #e67e22);
+    }
+
+    .dashboard-charts {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .chart-widget {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .chart-widget h3 {
+      color: #333;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .recent-activity {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .activity-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .activity-item:last-child {
+      border-bottom: none;
+    }
+
+    .activity-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(0, 240, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 15px;
+    }
+
+    .activity-content {
+      flex: 1;
+    }
+
+    .activity-time {
+      font-size: 0.8em;
+      opacity: 0.7;
+    }
+
+    .health-alerts {
+      background: rgba(255, 193, 7, 0.1);
+      border: 1px solid rgba(255, 193, 7, 0.3);
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .alert-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .alert-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .alert-icon {
+      margin-right: 10px;
+      font-size: 1.2em;
+    }
+
+    @media (max-width: 768px) {
+      .quick-stats {
+        grid-template-columns: 1fr;
+      }
+      
+      .dashboard-charts {
+        grid-template-columns: 1fr;
+      }
+      
+      .quick-actions {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <aside class="sidebar">
+      <h2>MediMind</h2>
+      <ul>
+        <li onclick="navigate('index.html')" class="active">🏠 Dashboard</li>
+        <li onclick="navigate('upload.html')">📁 Upload Records</li>
+        <li onclick="navigate('analytics.html')">📊 Health Analytics</li>
+        <li onclick="navigate('pill.html')">💊 Pill Reminder</li>
+        <li onclick="navigate('chatbot.html')">🤖 Chatbot</li>
+      </ul>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <input type="text" id="searchInput" placeholder="Search health records..." onkeyup="searchRecords()" />
+        <button class="profile-btn" onclick="showProfile()">Neha 👤</button>
+      </header>
+
+      <div class="dashboard-main">
+        <!-- Welcome Section -->
+        <div class="welcome-section">
+          <h1>Welcome back, Neha! 👋</h1>
+          <p>Here's your health overview for today. Stay on top of your wellness journey.</p>
+          <div id="currentDateTime"></div>
+        </div>
+
+        <!-- Health Alerts -->
+        <div id="healthAlerts" class="health-alerts" style="display: none;">
+          <h3>🚨 Health Alerts</h3>
+          <div id="alertsList"></div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="quick-stats">
+          <div class="stat-card" onclick="navigate('analytics.html')">
+            <h3>📊 Total Records</h3>
+            <div class="value" id="totalRecords">-</div>
+            <div class="trend">Click to view analytics</div>
+          </div>
+          
+          <div class="stat-card" onclick="navigate('analytics.html')">
+            <h3>🩺 Latest Blood Pressure</h3>
+            <div class="value" id="latestBP">-</div>
+            <div class="trend" id="bpTrend">No data available</div>
+          </div>
+          
+          <div class="stat-card" onclick="navigate('analytics.html')">
+            <h3>🍯 Latest Glucose</h3>
+            <div class="value" id="latestGlucose">-</div>
+            <div class="trend" id="glucoseTrend">No data available</div>
+          </div>
+          
+          <div class="stat-card" onclick="navigate('pill.html')">
+            <h3>💊 Active Medications</h3>
+            <div class="value" id="activeMedications">-</div>
+            <div class="trend">Click to manage pills</div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+          <button class="action-btn" onclick="navigate('upload.html')">
+            📁 Upload New Record
+          </button>
+          <button class="action-btn secondary" onclick="navigate('analytics.html')">
+            📊 View Analytics
+          </button>
+          <button class="action-btn success" onclick="navigate('pill.html')">
+            💊 Pill Reminder
+          </button>
+          <button class="action-btn warning" onclick="navigate('chatbot.html')">
+            🤖 Ask Health Bot
+          </button>
+          <button class="action-btn" onclick="exportHealthData()">
+            📤 Export Data
+          </button>
+          <button class="action-btn secondary" onclick="scheduleAppointment()">
+            📅 Schedule Appointment
+          </button>
+        </div>
+
+        <!-- Dashboard Charts -->
+        <div class="dashboard-charts">
+          <div class="chart-widget">
+            <h3>Blood Pressure Trend (Last 7 Days)</h3>
+            <canvas id="dashboardBPChart" width="400" height="200"></canvas>
+          </div>
+          
+          <div class="chart-widget">
+            <h3>Health Metrics Overview</h3>
+            <canvas id="dashboardOverviewChart" width="400" height="200"></canvas>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="recent-activity">
+          <h3>📋 Recent Activity</h3>
+          <div id="recentActivityList">
+            <div class="activity-item">
+              <div class="activity-icon">📄</div>
+              <div class="activity-content">
+                <div>Loading recent activities...</div>
+                <div class="activity-time">Please wait</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    let dashboardData = null;
+    let charts = {};
+
+    // Check authentication
+    function checkAuth() {
+      if (localStorage.getItem('medimind_logged_in') !== 'true') {
+        window.location.href = '/';
+        return false;
+      }
+      return true;
+    }
+
+    function navigate(page) {
+      if (!checkAuth()) return;
+      window.location.href = page;
+    }
+
+    function updateDateTime() {
+      const now = new Date();
+      const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      };
+      document.getElementById('currentDateTime').textContent = now.toLocaleDateString('en-US', options);
+    }
+
+    async function loadDashboardData() {
+      try {
+        const response = await fetch('http://127.0.0.1:5000/analytics_data');
+        const data = await response.json();
+        
+        if (data.has_data) {
+          dashboardData = data;
+          updateDashboardStats(data);
+          createDashboardCharts(data);
+          updateRecentActivity(data);
+          checkHealthAlerts(data);
+        } else {
+          showNoDataState();
+        }
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+        showErrorState();
+      }
+    }
+
+    function updateDashboardStats(data) {
+      document.getElementById('totalRecords').textContent = data.summary.total_records;
+      document.getElementById('latestBP').textContent = data.summary.latest_bp || 'N/A';
+      document.getElementById('latestGlucose').textContent = data.summary.latest_glucose || 'N/A';
+      document.getElementById('activeMedications').textContent = data.summary.active_medications;
+
+      // Update trends
+      if (data.blood_pressure.values.length > 1) {
+        const latest = data.blood_pressure.systolic[data.blood_pressure.systolic.length - 1];
+        const previous = data.blood_pressure.systolic[data.blood_pressure.systolic.length - 2];
+        const trend = latest > previous ? '📈 Increased' : latest < previous ? '📉 Decreased' : '➡️ Stable';
+        document.getElementById('bpTrend').textContent = trend;
+      }
+
+      if (data.glucose.values.length > 1) {
+        const latest = data.glucose.values[data.glucose.values.length - 1];
+        const previous = data.glucose.values[data.glucose.values.length - 2];
+        const trend = latest > previous ? '📈 Increased' : latest < previous ? '📉 Decreased' : '➡️ Stable';
+        document.getElementById('glucoseTrend').textContent = trend;
+      }
+    }
+
+    function createDashboardCharts(data) {
+      // Destroy existing charts
+      Object.values(charts).forEach(chart => chart.destroy());
+      charts = {};
+
+      // Blood Pressure Chart (Last 7 entries)
+      if (data.blood_pressure.values.length > 0) {
+        const bpCtx = document.getElementById('dashboardBPChart').getContext('2d');
+        const lastSevenBP = {
+          dates: data.blood_pressure.dates.slice(-7),
+          systolic: data.blood_pressure.systolic.slice(-7),
+          diastolic: data.blood_pressure.diastolic.slice(-7)
+        };
+
+        charts.dashboardBP = new Chart(bpCtx, {
+          type: 'line',
+          data: {
+            labels: lastSevenBP.dates,
+            datasets: [{
+              label: 'Systolic',
+              data: lastSevenBP.systolic,
+              borderColor: '#e74c3c',
+              backgroundColor: 'rgba(231, 76, 60, 0.1)',
+              tension: 0.4,
+              fill: true
+            }, {
+              label: 'Diastolic',
+              data: lastSevenBP.diastolic,
+              borderColor: '#3498db',
+              backgroundColor: 'rgba(52, 152, 219, 0.1)',
+              tension: 0.4,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: 'bottom'
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: false,
+                title: {
+                  display: true,
+                  text: 'mmHg'
+                }
+              }
+            }
+          }
+        });
+      }
+
+      // Overview Chart
+      const overviewCtx = document.getElementById('dashboardOverviewChart').getContext('2d');
+      charts.overview = new Chart(overviewCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Blood Pressure Records', 'Glucose Records', 'Cholesterol Records', 'Other Records'],
+          datasets: [{
+            data: [
+              data.blood_pressure.values.length,
+              data.glucose.values.length,
+              data.cholesterol.values.length,
+              Math.max(0, data.summary.total_records - data.blood_pressure.values.length - data.glucose.values.length - data.cholesterol.values.length)
+            ],
+            backgroundColor: ['#e74c3c', '#2ecc71', '#f39c12', '#9b59b6']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      });
+    }
+
+    function updateRecentActivity(data) {
+      const activityList = document.getElementById('recentActivityList');
+      let activityHTML = '';
+
+      if (data.recent_records && data.recent_records.length > 0) {
+        data.recent_records.slice(0, 5).forEach(record => {
+          activityHTML += `
+            <div class="activity-item">
+              <div class="activity-icon">📄</div>
+              <div class="activity-content">
+                <div>Uploaded: ${record.filename}</div>
+                <div class="activity-time">${record.date} - ${record.key_findings}</div>
+              </div>
+            </div>
+          `;
+        });
+      } else {
+        activityHTML = `
+          <div class="activity-item">
+            <div class="activity-icon">📝</div>
+            <div class="activity-content">
+              <div>No recent activity</div>
+              <div class="activity-time">Upload your first health record to get started</div>
+            </div>
+          </div>
+        `;
+      }
+
+      activityList.innerHTML = activityHTML;
+    }
+
+    function checkHealthAlerts(data) {
+      const alertsContainer = document.getElementById('healthAlerts');
+      const alertsList = document.getElementById('alertsList');
+      let alerts = [];
+
+      // Check for high blood pressure
+      if (data.blood_pressure.systolic.length > 0) {
+        const latestSystolic = data.blood_pressure.systolic[data.blood_pressure.systolic.length - 1];
+        const latestDiastolic = data.blood_pressure.diastolic[data.blood_pressure.diastolic.length - 1];
+        
+        if (latestSystolic > 140 || latestDiastolic > 90) {
+          alerts.push({
+            icon: '🚨',
+            message: 'High blood pressure detected. Consider consulting your doctor.',
+            type: 'warning'
+          });
+        }
+      }
+
+      // Check for high glucose
+      if (data.glucose.values.length > 0) {
+        const latestGlucose = data.glucose.values[data.glucose.values.length - 1];
+        if (latestGlucose > 180) {
+          alerts.push({
+            icon: '⚠️',
+            message: 'High glucose level detected. Monitor your blood sugar closely.',
+            type: 'warning'
+          });
+        }
+      }
+
+      // Check for medication reminders
+      if (data.summary.active_medications > 0) {
+        alerts.push({
+          icon: '💊',
+          message: `You have ${data.summary.active_medications} active medications. Don't forget your doses!`,
+          type: 'info'
+        });
+      }
+
+      if (alerts.length > 0) {
+        let alertsHTML = '';
+        alerts.forEach(alert => {
+          alertsHTML += `
+            <div class="alert-item">
+              <span class="alert-icon">${alert.icon}</span>
+              <span>${alert.message}</span>
+            </div>
+          `;
+        });
+        alertsList.innerHTML = alertsHTML;
+        alertsContainer.style.display = 'block';
+      }
+    }
+
+    function showNoDataState() {
+      document.getElementById('totalRecords').textContent = '0';
+      document.getElementById('latestBP').textContent = 'No data';
+      document.getElementById('latestGlucose').textContent = 'No data';
+      document.getElementById('activeMedications').textContent = '0';
+      
+      const activityList = document.getElementById('recentActivityList');
+      activityList.innerHTML = `
+        <div class="activity-item">
+          <div class="activity-icon">📝</div>
+          <div class="activity-content">
+            <div>No health records found</div>
+            <div class="activity-time">Upload your first health record to get started</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function showErrorState() {
+      document.getElementById('totalRecords').textContent = 'Error';
+      document.getElementById('latestBP').textContent = 'Error';
+      document.getElementById('latestGlucose').textContent = 'Error';
+      document.getElementById('activeMedications').textContent = 'Error';
+    }
+
+    function searchRecords() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      if (searchTerm.length > 2) {
+        // Implement search functionality
+        console.log('Searching for:', searchTerm);
+        // You can add actual search implementation here
+      }
+    }
+
+    function showProfile() {
+      const user = JSON.parse(localStorage.getItem('medimind_user') || '{}');
+      const confirmLogout = confirm(`Logged in as: ${user.name || 'User'}\n\nWould you like to logout?`);
+      if (confirmLogout) {
+        localStorage.removeItem('medimind_logged_in');
+        localStorage.removeItem('medimind_user');
+        window.location.href = 'login.html';
+      }
+    }
+
+    function exportHealthData() {
+      if (dashboardData && dashboardData.has_data) {
+        const dataStr = JSON.stringify(dashboardData, null, 2);
+        const dataBlob = new Blob([dataStr], {type: 'application/json'});
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'health_data_export.json';
+        link.click();
+        URL.revokeObjectURL(url);
+      } else {
+        alert('No data available to export. Please upload some health records first.');
+      }
+    }
+
+    function scheduleAppointment() {
+      alert('Appointment scheduling feature coming soon!');
+    }
+
+    // Initialize dashboard
+    window.onload = function() {
+      if (!checkAuth()) return;
+      
+      updateDateTime();
+      setInterval(updateDateTime, 60000); // Update every minute
+      loadDashboardData();
+    };
+  </script>
+</body>
+</html>

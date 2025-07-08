@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MediMind Chatbot</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Tailwind CSS CDN for modern styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Markdown-it library for rendering Markdown to HTML -->
+  <script src="https://cdn.jsdelivr.net/npm/markdown-it@13.0.1/dist/markdown-it.min.js"></script>
+  <style>
+    /* Custom scrollbar for chat messages */
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 8px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #334155; /* Darker track for contrast */
+      border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #60a5fa; /* Blue thumb */
+      border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #3b82f6; /* Darker blue on hover */
+    }
+    /* Ensure font consistency */
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Styles for Markdown rendered content within chat bubbles */
+    .chat-message-content h1, .chat-message-content h2, .chat-message-content h3,
+    .chat-message-content h4, .chat-message-content h5, .chat-message-content h6 {
+      font-weight: bold;
+      margin-top: 0.75em;
+      margin-bottom: 0.5em;
+      line-height: 1.2;
+    }
+    .chat-message-content h1 { font-size: 1.5em; }
+    .chat-message-content h2 { font-size: 1.3em; }
+    .chat-message-content h3 { font-size: 1.2em; }
+    .chat-message-content ul, .chat-message-content ol {
+      margin-left: 1.5em; /* Indent lists */
+      list-style-position: outside;
+      margin-bottom: 0.5em;
+    }
+    .chat-message-content li {
+      margin-bottom: 0.25em;
+    }
+    .chat-message-content p {
+      margin-bottom: 0.5em;
+    }
+    .chat-message-content strong {
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <aside class="sidebar">
+      <h2>MediMind</h2>
+      <ul>
+        <li onclick="navigate('index.html')">🏠 Dashboard</li>
+        <li onclick="navigate('upload.html')">📁 Upload Records</li>
+        <li onclick="navigate('analytics.html')">📊 Health Analytics</li>
+        <li onclick="navigate('pill.html')">💊 Pill Reminder</li>
+        <li onclick="navigate('chatbot.html')">🤖 Chatbot</li>
+      </ul>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <input type="text" placeholder="Search health records..." />
+        <button class="profile-btn">Neha 👤</button>
+      </header>
+
+      <div class="chatbot-container">
+        <div class="chatbot-header">
+          <h1 class="text-2xl font-bold text-center">Medical Chatbot</h1>
+          <p class="text-sm text-center opacity-90 mt-1">Your AI assistant for medical inquiries</p>
+        </div>
+
+        <div id="chat-messages" class="flex-1 p-4 overflow-y-auto custom-scrollbar">
+          <!-- Chat messages will be appended here -->
+          <div class="flex flex-col items-center justify-center h-full text-gray-400">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" class="w-16 h-16 mb-4 text-blue-400">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H16.5m3.75 7.875V10.5a3 3 0 0 0-3-3h-15a3 3 0 0 0-3 3v7.875A3 3 0 0 0 6.75 21h9.75a3 3 0 0 0 3-3v-7.875Z" />
+              </svg>
+              <p class="text-lg">How can I help you today?</p>
+              <p class="text-sm mt-2">Ask me about symptoms, medicines, or general medical information.</p>
+          </div>
+        </div>
+
+        <div class="chatbot-input-area">
+          <input
+            type="text"
+            id="user-input"
+            class="flex-1 p-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+            placeholder="Type your medical query..."
+          />
+          <button
+            id="send-button"
+            class="ml-3 px-6 py-3 bg-blue-600 text-white rounded-full shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Send
+          </button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Function to navigate between pages
+    function navigate(page) {
+      window.location.href = page;
+    }
+
+    const chatMessages = document.getElementById('chat-messages');
+    const userInput = document.getElementById('user-input');
+    const sendButton = document.getElementById('send-button');
+    let isLoading = false; // Flag to prevent multiple requests
+
+    // Initialize Markdown-it parser
+    const md = window.markdownit();
+
+    // IMPORTANT: This line now retrieves the API key from the Flask-injected variable
+    const apiKey = "{{ gemini_api_key }}"; // This will be replaced by Flask
+
+    // Function to scroll to the bottom of the chat
+    function scrollToBottom() {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Function to add a message to the chat display
+    function addMessage(role, text, animate = false) {
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add('flex', 'mb-4');
+      if (role === 'user') {
+        messageDiv.classList.add('justify-end');
+      } else {
+        messageDiv.classList.add('justify-start');
+      }
+
+      const contentDiv = document.createElement('div');
+      contentDiv.classList.add('rounded-lg', 'p-3', 'max-w-[80%]');
+      // Add a class for Markdown content styling
+      contentDiv.classList.add('chat-message-content');
+
+      if (role === 'user') {
+        contentDiv.classList.add('bg-blue-500', 'text-white', 'rounded-br-none');
+      } else {
+        // Changed bot's background and text color to a soft teal
+        contentDiv.classList.add('bg-teal-600', 'text-white', 'rounded-bl-none');
+      }
+
+      // Create a temporary element to hold rendered Markdown
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = md.render(text); // Render Markdown to HTML
+
+      messageDiv.appendChild(contentDiv);
+      chatMessages.appendChild(messageDiv);
+
+      if (animate) {
+        let i = 0;
+        const speed = 1; // Typing speed in milliseconds per character
+        const allHtmlContent = tempDiv.innerHTML; // Get all rendered HTML content
+
+        // To animate HTML, we need to append nodes or characters carefully.
+        // For simplicity and robustness with complex HTML (like lists, bolding),
+        // we'll append the full HTML content and then simulate a "typing" reveal.
+        // A true character-by-character HTML animation is more complex.
+        // Here, we'll reveal the HTML content over time.
+
+        // Create a span to hold the revealed content
+        const animatedSpan = document.createElement('span');
+        contentDiv.appendChild(animatedSpan);
+
+        const revealContent = () => {
+          if (i < allHtmlContent.length) {
+            animatedSpan.innerHTML = allHtmlContent.substring(0, i + 1);
+            i++;
+            scrollToBottom();
+            setTimeout(revealContent, speed);
+          } else {
+            // Animation complete, ensure scroll to bottom one last time
+            scrollToBottom();
+          }
+        };
+        revealContent();
+
+      } else {
+        contentDiv.innerHTML += tempDiv.innerHTML; // Directly append rendered HTML
+        scrollToBottom();
+      }
+    }
+
+    // Function to show/hide loading indicator
+    function showLoading(show) {
+      if (show) {
+        const loadingDiv = document.createElement('div');
+        loadingDiv.id = 'loading-indicator';
+        loadingDiv.classList.add('flex', 'justify-start', 'mb-4');
+        loadingDiv.innerHTML = `
+          <div class="bg-teal-600 text-white rounded-lg rounded-bl-none p-3 max-w-[80%]">
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 bg-teal-400 rounded-full animate-bounce"></div>
+              <div class="w-2 h-2 bg-teal-400 rounded-full animate-bounce delay-75"></div>
+              <div class="w-2 h-2 bg-teal-400 rounded-full animate-bounce delay-150"></div>
+            </div>
+          </div>
+        `;
+        chatMessages.appendChild(loadingDiv);
+        scrollToBottom();
+        sendButton.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+        sendButton.disabled = true;
+        userInput.disabled = true;
+      } else {
+        const loadingDiv = document.getElementById('loading-indicator');
+        if (loadingDiv) {
+          loadingDiv.remove();
+        }
+        sendButton.innerHTML = 'Send';
+        sendButton.disabled = false;
+        userInput.disabled = false;
+      }
+      isLoading = show;
+    }
+
+    // Function to send a message to the Gemini API
+    async function sendMessage() {
+      const message = userInput.value.trim();
+      if (message === '' || isLoading) return;
+
+      // Clear initial welcome message if present
+      const initialMessage = chatMessages.querySelector('.h-full.text-gray-400');
+      if (initialMessage) {
+          initialMessage.remove();
+      }
+
+      addMessage('user', message);
+      userInput.value = ''; // Clear input field
+      showLoading(true); // Show loading indicator
+
+      try {
+        const prompt = `You are a helpful medical inquiry assistant. Provide detailed, comprehensive, and accurate information for medical queries, symptoms, and medicines.
+        
+        When providing symptom-based queries, always include:
+        1. An introductory paragraph summarizing the condition.
+        2. A clear heading for "Possible Causes" using Markdown heading syntax (e.g., "## Possible Causes:").
+        3. A bulleted list of possible causes.
+        4. A clear heading for "What to do when you feel [symptom]:" using Markdown heading syntax.
+        5. A bulleted list of actions to take.
+        6. A clear heading for "When to seek medical attention:" using Markdown heading syntax.
+        7. A bulleted list of conditions that require medical attention.
+        8. Conclude every response with a disclaimer that this information is not a substitute for professional medical advice.
+
+        Ensure all lists are properly formatted with standard Markdown bullet points (-) and headings use standard Markdown (#, ##, etc.). Avoid using double asterisks (**) for bolding within lists or paragraphs; use standard Markdown syntax for bolding if needed.
+
+User: ${message}
+
+Medical Assistant:`;
+
+        const payload = {
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.7,
+            topP: 0.95,
+            topK: 40,
+          },
+        };
+
+        // Use the API key injected by Flask
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (result.candidates && result.candidates.length > 0 &&
+            result.candidates[0].content && result.candidates[0].content.parts &&
+            result.candidates[0].content.parts.length > 0) {
+          const botResponseText = result.candidates[0].content.parts[0].text;
+          addMessage('bot', botResponseText, true); // Pass true to enable animation
+        } else {
+          console.error("Unexpected API response structure:", result);
+          addMessage('bot', "Sorry, I couldn't get a response. Please try again.");
+        }
+      } catch (error) {
+        console.error("Error calling Gemini API:", error);
+        addMessage('bot', "An error occurred while fetching the response. Please try again later.");
+      } finally {
+        showLoading(false); // Hide loading indicator
+      }
+    }
+
+    // Event listeners
+    sendButton.addEventListener('click', sendMessage);
+    userInput.addEventListener('keypress', function(event) {
+      if (event.key === 'Enter') {
+        sendMessage();
+      }
+    });
+  </script>
+</body>
+</html>

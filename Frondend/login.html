@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MediMind - Login</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .login-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+    }
+
+    .login-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .logo {
+      font-size: 3em;
+      margin-bottom: 10px;
+    }
+
+    .login-card h1 {
+      color: #00f0ff;
+      margin-bottom: 10px;
+      font-size: 2.5em;
+      font-weight: bold;
+    }
+
+    .login-card p {
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 30px;
+      font-size: 1.1em;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: rgba(255, 255, 255, 0.9);
+      font-weight: 500;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      font-size: 16px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+    }
+
+    .form-group input::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .form-group input:focus {
+      outline: none;
+      background: rgba(255, 255, 255, 0.15);
+      border-color: #00f0ff;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #00f0ff, #0080ff);
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 20px;
+    }
+
+    .login-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 240, 255, 0.4);
+    }
+
+    .login-btn:active {
+      transform: translateY(0);
+    }
+
+    .forgot-password {
+      color: rgba(255, 255, 255, 0.7);
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.3s ease;
+    }
+
+    .forgot-password:hover {
+      color: #00f0ff;
+    }
+
+    .demo-credentials {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .demo-credentials h4 {
+      color: #00f0ff;
+      margin-bottom: 10px;
+      font-size: 1em;
+    }
+
+    .demo-credentials p {
+      margin: 5px 0;
+      font-size: 0.9em;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    @media (max-width: 480px) {
+      .login-card {
+        padding: 30px 20px;
+        margin: 10px;
+      }
+      
+      .login-card h1 {
+        font-size: 2em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-card">
+      <div class="logo">🏥</div>
+      <h1>MediMind</h1>
+      <p>Your Personal Health Analytics Platform</p>
+      
+      <div class="demo-credentials">
+        <h4>Demo Access</h4>
+        <p>Username: demo@medimind.com</p>
+        <p>Password: demo123</p>
+      </div>
+
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input 
+            type="email" 
+            id="email" 
+            name="email" 
+            placeholder="Enter your email"
+            value="demo@medimind.com"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            placeholder="Enter your password"
+            value="demo123"
+            required
+          />
+        </div>
+
+        <button type="submit" class="login-btn">
+          Sign In to Dashboard
+        </button>
+      </form>
+
+      <a href="#" class="forgot-password">Forgot your password?</a>
+
+    </div>
+  </div>
+
+  <script>
+    function handleLogin(event) {
+      event.preventDefault();
+      
+      // Show loading state
+      const loginBtn = document.querySelector('.login-btn');
+      const originalText = loginBtn.textContent;
+      loginBtn.textContent = 'Signing in...';
+      loginBtn.disabled = true;
+      
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      
+      // Simple demo authentication
+      if (email === 'demo@medimind.com' && password === 'demo123') {
+        // Store login state
+        localStorage.setItem('medimind_logged_in', 'true');
+        localStorage.setItem('medimind_user', JSON.stringify({
+          name: 'Neha',
+          email: email,
+          loginTime: new Date().toISOString()
+        }));
+        
+        // Show success message
+        loginBtn.textContent = 'Success! Redirecting...';
+        loginBtn.style.background = 'linear-gradient(135deg, #2ecc71, #27ae60)';
+        
+        // Redirect to dashboard
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 1000);
+      } else {
+        // Reset button state
+        loginBtn.textContent = originalText;
+        loginBtn.disabled = false;
+        loginBtn.style.background = 'linear-gradient(135deg, #e74c3c, #c0392b)';
+        
+        alert('Invalid credentials. Please use the demo credentials provided.');
+        
+        // Reset button after error
+        setTimeout(() => {
+          loginBtn.style.background = 'linear-gradient(135deg, #00f0ff, #0080ff)';
+        }, 2000);
+      }
+    }
+
+    // Check if already logged in
+    window.onload = function() {
+      if (localStorage.getItem('medimind_logged_in') === 'true') {
+        window.location.href = '/dashboard';
+      }
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Upload Health Records</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    mark {
+      background-color: yellow;
+      color: black;
+    }
+    #extractedJson pre {
+      background: rgba(255,255,255,0.05);
+      padding: 10px;
+      border-radius: 5px;
+    }
+    #extractedJson h4 {
+      margin-top: 1em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <aside class="sidebar">
+      <h2>MediMind</h2>
+      <ul>
+        <li onclick="navigate('index.html')">🏠 Dashboard</li>
+        <li onclick="navigate('upload.html')">📁 Upload Records</li>
+        <li onclick="navigate('analytics.html')">📊 Health Analytics</li>
+        <li onclick="navigate('pill.html')">💊 Pill Reminder</li>
+        <li onclick="navigate('chatbot.html')">🤖 Chatbot</li>
+      </ul>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <input type="text" placeholder="Search health records..." />
+        <button class="profile-btn">Neha 👤</button>
+      </header>
+
+      <h2 style='padding:20px;'>Upload Health Records Page</h2>
+
+      <div class="upload-area">
+        <input type="file" id="healthFile" accept=".pdf, .jpg, .jpeg, .png" multiple style="margin-bottom: 20px;">
+        <button onclick="uploadFile()" class="upload-btn">Upload Report(s)</button>
+        <p id="uploadStatus" style="margin-top: 15px;"></p>
+
+        <div id="extractedDataDisplay" style="margin-top: 20px; background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; display: none;">
+            <h3>Extracted Data:</h3>
+            <div id="extractedJson" style="white-space: pre-wrap;"></div>
+        </div>
+
+        <div id="uploadedFilesList" style="margin-top:30px;">
+          <h3>Uploaded Files:</h3>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function navigate(page) {
+      window.location.href = page;
+    }
+
+    async function uploadFile() {
+      const fileInput = document.getElementById('healthFile');
+      const uploadStatus = document.getElementById('uploadStatus');
+      const extractedDataDisplay = document.getElementById('extractedDataDisplay');
+      const extractedJson = document.getElementById('extractedJson');
+
+      if (fileInput.files.length === 0) {
+        uploadStatus.textContent = 'Please select files to upload.';
+        uploadStatus.style.color = 'yellow';
+        return;
+      }
+
+      const formData = new FormData();
+      for (let i = 0; i < fileInput.files.length; i++) {
+        formData.append('files', fileInput.files[i]);
+      }
+
+      uploadStatus.textContent = 'Uploading...';
+      uploadStatus.style.color = 'white';
+      extractedDataDisplay.style.display = 'none';
+
+      try {
+        const response = await fetch('http://127.0.0.1:5000/upload_record', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          uploadStatus.textContent = 'Files uploaded successfully!';
+          uploadStatus.style.color = '#00f0ff';
+
+          let allData = '';
+          result.results.forEach(file => {
+            allData += `<h4>📄 File: ${file.filename}</h4>`;
+
+            if (file.data) {
+              const { summary, structured, highlighted } = file.data;
+
+              allData += summary
+                ? `<p><strong>📝 Summary:</strong><br>${summary.replaceAll('\n', '<br>')}</p>`
+                : `<p><em>No summary available</em></p>`;
+
+              allData += structured && Object.keys(structured).length > 0
+                ? `<p><strong>📋 Structured Info:</strong><br><pre>${JSON.stringify(structured, null, 2)}</pre></p>`
+                : `<p><em>No structured info found</em></p>`;
+
+              allData += highlighted
+                ? `<p><strong>🔍 Highlighted Text:</strong><br>${highlighted.replaceAll('\n', '<br>')}</p>`
+                : `<p><em>No highlighted text</em></p>`;
+            } else {
+              allData += `<p><strong>Error:</strong> ${file.error || 'No data'}</p>`;
+            }
+
+            allData += `<hr>`;
+          });
+
+          extractedJson.innerHTML = allData;
+          extractedDataDisplay.style.display = 'block';
+          loadUploadedFiles();
+        } else {
+          uploadStatus.textContent = `Error: ${result.error || 'Upload failed'}`;
+          uploadStatus.style.color = 'red';
+        }
+      } catch (error) {
+        uploadStatus.textContent = 'Network/server error.';
+        uploadStatus.style.color = 'red';
+        console.error(error);
+      }
+    }
+
+    async function loadUploadedFiles() {
+      const container = document.getElementById('uploadedFilesList');
+      if (!container) return;
+
+      try {
+        const res = await fetch('http://127.0.0.1:5000/list_records');
+        const data = await res.json();
+
+        container.innerHTML = '<h3>Uploaded Files:</h3>';
+        data.files.forEach(filename => {
+          const div = document.createElement('div');
+          div.innerHTML = `
+            <span>${filename}</span>
+            <button onclick="deleteFile('${filename}')">🗑 Delete</button>
+          `;
+          container.appendChild(div);
+        });
+      } catch (err) {
+        container.innerHTML = 'Failed to load uploaded files.';
+      }
+    }
+
+    async function deleteFile(filename) {
+      if (!confirm(`Delete ${filename}?`)) return;
+
+      const res = await fetch(`http://127.0.0.1:5000/delete_record/${filename}`, {
+        method: 'DELETE'
+      });
+
+      const data = await res.json();
+      alert(data.message || data.error);
+      loadUploadedFiles();
+    }
+
+    window.onload = loadUploadedFiles;
+  </script>
+</body>
+</html>
