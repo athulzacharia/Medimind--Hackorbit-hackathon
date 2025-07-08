@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MediMind Pill Reminder</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Tailwind CSS CDN for modern styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Additional styles for pill reminder form and list */
+    .pill-reminder-container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.05); /* Slightly transparent background */
+      border-radius: 20px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 10px 15px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(0, 0, 0, 0.3);
+      color: white;
+      outline: none;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .form-input:focus {
+      border-color: #00f0ff;
+      box-shadow: 0 0 0 2px rgba(0, 240, 255, 0.3);
+    }
+
+    .form-input::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .add-reminder-btn {
+      background: linear-gradient(to right, #00f0ff, #00d0e0);
+      color: black;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .add-reminder-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 10px rgba(0, 240, 255, 0.3);
+    }
+
+    .reminder-item {
+      background: rgba(255, 255, 255, 0.1); /* Lighter background for items */
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <aside class="sidebar">
+      <h2>MediMind</h2>
+      <ul>
+        <li onclick="navigate('index.html')">🏠 Dashboard</li>
+        <li onclick="navigate('upload.html')">📁 Upload Records</li>
+        <li onclick="navigate('analytics.html')">📊 Health Analytics</li>
+        <li onclick="navigate('pill.html')">💊 Pill Reminder</li>
+        <li onclick="navigate('chatbot.html')">🤖 Chatbot</li>
+      </ul>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <input type="text" placeholder="Search health records..." />
+        <button class="profile-btn">Neha 👤</button>
+      </header>
+
+      <div class="pill-reminder-container">
+        <h2 class="text-3xl font-bold mb-6 text-center text-white">Pill Reminders</h2>
+        <!-- User ID display removed as Firebase authentication is no longer used -->
+
+        <!-- Add New Reminder Form -->
+        <div class="add-reminder-card bg-gray-800 p-6 rounded-xl shadow-lg mb-8">
+            <h3 class="text-2xl font-semibold mb-5 text-white">Add New Reminder</h3>
+            <p id="status-message" class="text-center mb-4"></p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label for="medication-name" class="block text-gray-300 text-sm font-bold mb-2">Medication Name:</label>
+                    <input type="text" id="medication-name" placeholder="e.g., Ibuprofen" class="form-input" required>
+                </div>
+                <div>
+                    <label for="dosage" class="block text-gray-300 text-sm font-bold mb-2">Dosage (optional):</label>
+                    <input type="text" id="dosage" placeholder="e.g., 200mg" class="form-input">
+                </div>
+                <div>
+                    <label for="time" class="block text-gray-300 text-sm font-bold mb-2">Time (HH:MM 24hr):</label>
+                    <input type="time" id="time" class="form-input" required>
+                </div>
+                <div>
+                    <label for="frequency" class="block text-gray-300 text-sm font-bold mb-2">Frequency:</label>
+                    <select id="frequency" class="form-input" required>
+                        <option value="Daily">Daily</option>
+                        <option value="Weekly">Weekly</option>
+                        <option value="Monthly">Monthly</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mb-6">
+                <label for="phone-number" class="block text-gray-300 text-sm font-bold mb-2">Phone Number (with country code, e.g., +919876543210):</label>
+                <input type="tel" id="phone-number" placeholder="+1XXXXXXXXXX" class="form-input">
+                <p class="text-xs text-gray-400 mt-1">For SMS alerts, enter your phone number with country code (e.g., +91 for India). During Twilio trial, only verified numbers can receive SMS.</p>
+            </div>
+
+            <button onclick="addReminder()" class="add-reminder-btn w-full py-3 rounded-lg font-bold text-lg">Add Reminder</button>
+        </div>
+
+        <!-- Notification Permission Section -->
+        <div class="bg-gray-800 p-6 rounded-xl shadow-lg mb-8 text-center">
+            <h3 class="text-xl font-semibold mb-3 text-white">Enable Browser Notifications</h3>
+            <p id="notification-status" class="text-gray-300 mb-4">Notifications: Not requested.</p>
+            <button onclick="requestNotificationPermissionAndPlaySound()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition duration-200">
+                Enable Notifications & Test Sound
+            </button>
+        </div>
+
+
+        <!-- Your Reminders List -->
+        <div class="your-reminders-card bg-gray-800 p-6 rounded-xl shadow-lg">
+            <h3 class="text-2xl font-semibold mb-5 text-white">Your Reminders</h3>
+            <div id="reminders-list">
+                <p class="text-gray-400">No reminders set yet. Add one above!</p>
+            </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Function to navigate between pages
+    function navigate(page) {
+      window.location.href = page;
+    }
+
+    // Array to store reminders in memory (not persistent)
+    let reminders = [];
+
+    // --- Local Notification and Sound ---
+    const notificationSound = new Audio('/sounds/notifications.mp3'); // Path should be relative to your static files root
+
+    async function requestNotificationPermission() {
+        if (!("Notification" in window)) {
+            console.warn("This browser does not support desktop notification");
+            document.getElementById('notification-status').textContent = 'Notifications: Not supported by this browser.';
+            document.getElementById('notification-status').style.color = 'red';
+            return false;
+        }
+
+        if (Notification.permission === "granted") {
+            document.getElementById('notification-status').textContent = 'Notifications: Granted.';
+            document.getElementById('notification-status').style.color = 'green';
+            return true;
+        }
+
+        if (Notification.permission === "denied") {
+            document.getElementById('notification-status').textContent = 'Notifications: Denied. Please enable in browser settings.';
+            document.getElementById('notification-status').style.color = 'orange';
+            return false;
+        }
+
+        // If permission is 'default' (not yet asked or dismissed)
+        const permission = await Notification.requestPermission();
+        if (permission === "granted") {
+            document.getElementById('notification-status').textContent = 'Notifications: Granted.';
+            document.getElementById('notification-status').style.color = 'green';
+            return true;
+        } else {
+            document.getElementById('notification-status').textContent = 'Notifications: Denied.';
+            document.getElementById('notification-status').style.color = 'orange';
+            return false;
+        }
+    }
+
+    // Function to request permission and immediately play sound (user interaction)
+    async function requestNotificationPermissionAndPlaySound() {
+        const granted = await requestNotificationPermission();
+        if (granted) {
+            // Play sound only if permission is granted and initiated by user click
+            notificationSound.play().catch(e => console.error("Error playing sound:", e));
+            // Also show a test notification
+            new Notification('Test Notification!', {
+                body: 'This is a test notification from MediMind.',
+                icon: 'https://placehold.co/64x64/00f0ff/000000?text=💊'
+            });
+        }
+    }
+
+
+    function showWebNotification(medication, dosage) {
+        // Check permission status directly before showing notification
+        if (Notification.permission === "granted") {
+            new Notification('Pill Reminder!', {
+                body: `Time to take your ${medication} (${dosage || 'no dosage specified'}).`,
+                icon: 'https://placehold.co/64x64/00f0ff/000000?text=💊' // Pill icon
+            });
+            // Attempt to play sound, but it might be blocked if not user-initiated
+            notificationSound.play().catch(e => console.error("Error playing sound (scheduled):", e));
+        } else {
+            console.warn("Notification permission not granted. Cannot show web notification.");
+            document.getElementById('notification-status').textContent = 'Notifications: Permission not granted. Click "Enable Notifications" button.';
+            document.getElementById('notification-status').style.color = 'orange';
+        }
+    }
+
+    // Helper function to convert 24-hour time to 12-hour (AM/PM) format
+    function formatTime12hr(time24hr) {
+        if (!time24hr) return 'N/A';
+        const [hours, minutes] = time24hr.split(':').map(Number);
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const formattedHours = hours % 12 || 12; // Convert 0 to 12 for AM/PM
+        return `${formattedHours}:${String(minutes).padStart(2, '0')} ${ampm}`;
+    }
+
+    // --- Reminder Management (Local Storage) ---
+    function addReminder() {
+        const medicationName = document.getElementById('medication-name').value.trim();
+        const dosage = document.getElementById('dosage').value.trim();
+        const time = document.getElementById('time').value.trim(); // This is HH:MM (24hr)
+        const frequency = document.getElementById('frequency').value;
+        const phoneNumber = document.getElementById('phone-number').value.trim();
+
+        if (!medicationName || !time || !frequency) {
+            document.getElementById('status-message').textContent = 'Please fill in Medication Name, Time, and Frequency.';
+            document.getElementById('status-message').style.color = 'red';
+            return;
+        }
+
+        const newReminder = {
+            id: Date.now().toString(), // Simple unique ID for local management
+            medicationName,
+            dosage,
+            time, // Store in 24hr format for comparison
+            frequency,
+            phoneNumber: phoneNumber || null,
+            createdAt: new Date().toISOString(),
+            lastTriggered: null // To prevent multiple triggers within the same minute
+        };
+
+        reminders.push(newReminder); // Add to local array
+        displayReminders(); // Update UI
+
+        document.getElementById('status-message').textContent = 'Reminder added successfully!';
+        document.getElementById('status-message').style.color = 'green';
+        clearForm();
+    }
+
+    function clearForm() {
+        document.getElementById('medication-name').value = '';
+        document.getElementById('dosage').value = '';
+        document.getElementById('time').value = '';
+        document.getElementById('frequency').value = 'Daily';
+        document.getElementById('phone-number').value = '';
+    }
+
+    // Function to display reminders from the local array
+    function displayReminders() {
+        const remindersList = document.getElementById('reminders-list');
+        remindersList.innerHTML = ''; // Clear current list
+
+        if (reminders.length === 0) {
+            remindersList.innerHTML = '<p class="text-gray-400">No reminders set yet. Add one above!</p>';
+            return;
+        }
+
+        reminders.forEach((reminder, index) => {
+            const reminderItem = document.createElement('div');
+            reminderItem.classList.add('reminder-item', 'bg-gray-700', 'p-4', 'rounded-lg', 'mb-3', 'flex', 'justify-between', 'items-center');
+            reminderItem.innerHTML = `
+                <div>
+                    <p class="font-bold text-lg">${reminder.medicationName} (${reminder.dosage || 'N/A'})</p>
+                    <p class="text-sm text-gray-300">Time: ${formatTime12hr(reminder.time)} | Frequency: ${reminder.frequency}</p>
+                    ${reminder.phoneNumber ? `<p class="text-xs text-gray-400">SMS to: ${reminder.phoneNumber}</p>` : ''}
+                </div>
+                <button class="delete-reminder-btn bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md transition duration-200" data-id="${reminder.id}">Delete</button>
+            `;
+            remindersList.appendChild(reminderItem);
+        });
+
+        document.querySelectorAll('.delete-reminder-btn').forEach(button => {
+            button.onclick = (event) => deleteReminder(event.target.dataset.id);
+        });
+    }
+
+    function deleteReminder(id) {
+        reminders = reminders.filter(reminder => reminder.id !== id);
+        displayReminders(); // Update UI
+        document.getElementById('status-message').textContent = 'Reminder deleted successfully!';
+        document.getElementById('status-message').style.color = 'green';
+    }
+
+    // --- SMS Notification via Flask Backend ---
+    async function sendSmsNotification(toPhoneNumber, messageBody) {
+        try {
+            const response = await fetch('/send_sms', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    to_phone_number: toPhoneNumber,
+                    message_body: messageBody
+                })
+            });
+            const result = await response.json();
+            if (response.ok) {
+                console.log('SMS API Success:', result.message);
+            } else {
+                console.error('SMS API Error:', result.error);
+            }
+        } catch (error) {
+            console.error('Network error sending SMS:', error);
+        }
+    }
+
+    // --- Reminder Scheduling (Client-side Simulation) ---
+    // This will only work while the page is open.
+    setInterval(() => {
+        const now = new Date();
+        const currentHour = String(now.getHours()).padStart(2, '0');
+        const currentMinute = String(now.getMinutes()).padStart(2, '0');
+        const currentTime24hr = `${currentHour}:${currentMinute}`;
+
+        reminders.forEach(reminder => {
+            // Check if reminder time matches current time and hasn't been triggered in the last minute
+            if (reminder.frequency === 'Daily' && reminder.time === currentTime24hr) {
+                const lastTriggeredTime = reminder.lastTriggered ? new Date(reminder.lastTriggered) : null;
+                const oneMinuteAgo = new Date(now.getTime() - 60 * 1000);
+
+                if (!lastTriggeredTime || lastTriggeredTime < oneMinuteAgo) {
+                    console.log(`Time for ${reminder.medicationName}! Triggering notifications.`);
+                    showWebNotification(reminder.medicationName, reminder.dosage);
+
+                    if (reminder.phoneNumber) {
+                        const smsMessage = `MediMind Reminder: It's time to take your ${reminder.medicationName} (${reminder.dosage || 'no dosage specified'}).`;
+                        sendSmsNotification(reminder.phoneNumber, smsMessage);
+                    }
+
+                    // Update lastTriggered timestamp to prevent immediate re-trigger
+                    reminder.lastTriggered = now.toISOString();
+                    // Re-display reminders to update the in-memory object (though not persistent)
+                    displayReminders();
+                }
+            }
+            // More complex logic would be needed for 'Weekly' or other frequencies
+        });
+    }, 10 * 1000); // Check every 10 seconds (changed from 60 seconds)
+
+    // Initial display of reminders when the page loads
+    window.onload = displayReminders;
+
+    // Initial check for notification permission status on load
+    document.addEventListener('DOMContentLoaded', requestNotificationPermission);
+  </script>
+</body>
+</html>
