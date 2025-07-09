@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>MediMind Pill Reminder</title>
   <link rel="stylesheet" href="style.css" />
-  <!-- Tailwind CSS CDN for modern styling -->
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     /* Additional styles for pill reminder form and list */
@@ -55,6 +54,82 @@
       background: rgba(255, 255, 255, 0.1); /* Lighter background for items */
       border: 1px solid rgba(255, 255, 255, 0.15);
     }
+
+    /* Styles for the status message to be centered and visible */
+    #status-message-container {
+        text-align: center;
+        margin-bottom: 20px; /* Space below the message */
+        position: relative;
+        z-index: 10;
+        padding: 10px;
+        background: rgba(0, 0, 0, 0.7); /* Darker background for contrast */
+        border-radius: 8px;
+        color: white; /* Ensure text color is visible */
+        opacity: 0; /* Start hidden */
+        transition: opacity 0.5s ease-in-out; /* Smooth transition for appearance */
+        width: fit-content; /* Adjust width to content */
+        margin-left: auto;
+        margin-right: auto;
+        top: 0;
+        left: 0;
+        right: 0;
+        /* Ensure it's not hidden by overflow of parent or other elements */
+        transform: translateY(-10px); /* Slight initial lift */
+    }
+    #status-message-container.show {
+        opacity: 1; /* Make visible when 'show' class is added */
+        transform: translateY(0); /* Move to original position */
+    }
+    #status-message {
+        font-size: 1.1em;
+        font-weight: bold;
+    }
+
+    /* New style for the pill reminder alert specifically */
+    #pill-alert-message-container {
+        position: fixed; /* Fixed position to overlay entire page */
+        top: 50%; /* Center vertically */
+        left: 50%; /* Center horizontally */
+        transform: translate(-50%, -50%); /* Adjust for true centering */
+        z-index: 1000; /* High z-index to be on top of everything */
+        padding: 30px;
+        background: linear-gradient(to right, #00f0ff, #00d0e0); /* Vibrant background */
+        color: black; /* Contrast text color */
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 240, 255, 0.6); /* Glowing shadow */
+        text-align: center;
+        font-size: 1.8em;
+        font-weight: bold;
+        opacity: 0; /* Start hidden */
+        visibility: hidden; /* Also hide from screen readers when not visible */
+        transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out, transform 0.5s ease-in-out;
+        max-width: 90%; /* Prevent it from being too wide on small screens */
+        width: 400px; /* Fixed width */
+        box-sizing: border-box; /* Include padding in width */
+    }
+
+    #pill-alert-message-container.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translate(-50%, -50%) scale(1); /* Zoom in slightly */
+    }
+
+    #pill-alert-message-container .close-btn {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        font-size: 1.2em;
+        cursor: pointer;
+        color: black;
+        background: none;
+        border: none;
+        padding: 5px;
+        border-radius: 50%;
+        line-height: 1; /* Ensure button text is centered */
+    }
+    #pill-alert-message-container .close-btn:hover {
+        background: rgba(0,0,0,0.1);
+    }
   </style>
 </head>
 <body>
@@ -78,12 +153,18 @@
 
       <div class="pill-reminder-container">
         <h2 class="text-3xl font-bold mb-6 text-center text-white">Pill Reminders</h2>
-        <!-- User ID display removed as Firebase authentication is no longer used -->
+        
+        <div id="status-message-container">
+            <p id="status-message" class="text-center"></p>
+        </div>
 
-        <!-- Add New Reminder Form -->
+        <div id="pill-alert-message-container">
+            <button class="close-btn" onclick="hidePillAlert()">&times;</button>
+            <p id="pill-alert-message"></p>
+        </div>
+
         <div class="add-reminder-card bg-gray-800 p-6 rounded-xl shadow-lg mb-8">
             <h3 class="text-2xl font-semibold mb-5 text-white">Add New Reminder</h3>
-            <p id="status-message" class="text-center mb-4"></p>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
@@ -116,7 +197,6 @@
             <button onclick="addReminder()" class="add-reminder-btn w-full py-3 rounded-lg font-bold text-lg">Add Reminder</button>
         </div>
 
-        <!-- Notification Permission Section -->
         <div class="bg-gray-800 p-6 rounded-xl shadow-lg mb-8 text-center">
             <h3 class="text-xl font-semibold mb-3 text-white">Enable Browser Notifications</h3>
             <p id="notification-status" class="text-gray-300 mb-4">Notifications: Not requested.</p>
@@ -126,7 +206,6 @@
         </div>
 
 
-        <!-- Your Reminders List -->
         <div class="your-reminders-card bg-gray-800 p-6 rounded-xl shadow-lg">
             <h3 class="text-2xl font-semibold mb-5 text-white">Your Reminders</h3>
             <div id="reminders-list">
@@ -196,6 +275,26 @@
         }
     }
 
+    // Function to display the in-browser pill reminder alert
+    function showPillAlert(medication, dosage) {
+        const pillAlertContainer = document.getElementById('pill-alert-message-container');
+        const pillAlertMessage = document.getElementById('pill-alert-message');
+        
+        pillAlertMessage.innerHTML = `Time to take your **${medication}**!<br>${dosage ? `Dosage: ${dosage}` : ''}`;
+        pillAlertContainer.classList.add('show');
+        notificationSound.play().catch(e => console.error("Error playing sound (scheduled):", e));
+
+        // Optionally hide the alert after a few seconds if user doesn't close it
+        setTimeout(() => {
+            hidePillAlert();
+        }, 10000); // Hide after 10 seconds automatically
+    }
+
+    // Function to hide the in-browser pill reminder alert
+    function hidePillAlert() {
+        const pillAlertContainer = document.getElementById('pill-alert-message-container');
+        pillAlertContainer.classList.remove('show');
+    }
 
     function showWebNotification(medication, dosage) {
         // Check permission status directly before showing notification
@@ -230,9 +329,17 @@
         const frequency = document.getElementById('frequency').value;
         const phoneNumber = document.getElementById('phone-number').value.trim();
 
+        const statusMessageElement = document.getElementById('status-message');
+        const statusMessageContainer = document.getElementById('status-message-container');
+
         if (!medicationName || !time || !frequency) {
-            document.getElementById('status-message').textContent = 'Please fill in Medication Name, Time, and Frequency.';
-            document.getElementById('status-message').style.color = 'red';
+            statusMessageElement.textContent = 'Please fill in Medication Name, Time, and Frequency.';
+            statusMessageElement.style.color = 'red';
+            statusMessageContainer.classList.add('show'); // Show the message container
+            setTimeout(() => {
+                statusMessageContainer.classList.remove('show');
+                //statusMessageElement.textContent = ''; // Clear message after it fades
+            }, 3000); // Hide after 3 seconds
             return;
         }
 
@@ -250,8 +357,14 @@
         reminders.push(newReminder); // Add to local array
         displayReminders(); // Update UI
 
-        document.getElementById('status-message').textContent = 'Reminder added successfully!';
-        document.getElementById('status-message').style.color = 'green';
+        statusMessageElement.textContent = 'Reminder added successfully!';
+        statusMessageElement.style.color = 'green';
+        statusMessageContainer.classList.add('show'); // Show the message container
+        setTimeout(() => {
+            statusMessageContainer.classList.remove('show');
+            //statusMessageElement.textContent = ''; // Clear message after it fades
+        }, 3000); // Hide after 3 seconds
+
         clearForm();
     }
 
@@ -295,8 +408,15 @@
     function deleteReminder(id) {
         reminders = reminders.filter(reminder => reminder.id !== id);
         displayReminders(); // Update UI
-        document.getElementById('status-message').textContent = 'Reminder deleted successfully!';
-        document.getElementById('status-message').style.color = 'green';
+        const statusMessageElement = document.getElementById('status-message');
+        const statusMessageContainer = document.getElementById('status-message-container');
+        statusMessageElement.textContent = 'Reminder deleted successfully!';
+        statusMessageElement.style.color = 'green';
+        statusMessageContainer.classList.add('show'); // Show the message container
+        setTimeout(() => {
+            statusMessageContainer.classList.remove('show');
+            //statusMessageElement.textContent = ''; // Clear message after it fades
+        }, 3000); // Hide after 3 seconds
     }
 
     // --- SMS Notification via Flask Backend ---
@@ -339,6 +459,11 @@
 
                 if (!lastTriggeredTime || lastTriggeredTime < oneMinuteAgo) {
                     console.log(`Time for ${reminder.medicationName}! Triggering notifications.`);
+                    
+                    // Show the in-browser alert
+                    showPillAlert(reminder.medicationName, reminder.dosage);
+                    
+                    // Show web notification (desktop push notification)
                     showWebNotification(reminder.medicationName, reminder.dosage);
 
                     if (reminder.phoneNumber) {
