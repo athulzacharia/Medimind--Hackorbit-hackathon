@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediMind Emotional Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Face-API.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <style>
+        /* General Styles - Reusing from existing design */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #2c3e50; /* Dark blue background for the entire body */
+            margin: 0;
+            display: flex;
+            min-height: 100vh;
+            color: #ecf0f1; /* Light text color */
+        }
+
+        .container {
+            display: flex;
+            width: 100%;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: #2c3e50; /* Dark blue */
+            color: white;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            height: 100vh; /* Full height */
+            position: fixed; /* Keep sidebar fixed */
+            top: 0;
+            left: 0;
+            overflow-y: auto; /* Enable scrolling if content overflows */
+        }
+
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.8rem;
+            color: #ecf0f1; /* Light grey */
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            flex-grow: 1; /* Allows list to take available space */
+        }
+
+        .sidebar ul li {
+            padding: 15px 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            display: flex;
+            align-items: center;
+            font-size: 1rem;
+        }
+
+        .sidebar ul li i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+
+        .sidebar ul li:hover {
+            background-color: #34495e; /* Slightly lighter dark blue */
+            transform: translateX(5px);
+        }
+
+        .sidebar ul li.active {
+            background-color: #3498db; /* Blue for active item */
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .main-content {
+            margin-left: 250px; /* Offset for fixed sidebar */
+            flex-grow: 1;
+            padding: 20px;
+            background-color: #34495e; /* Darker background for main content */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative; /* For canvas positioning */
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: #2c3e50; /* Darker topbar to blend with sidebar */
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            width: 100%; /* Ensure topbar spans full width */
+            position: absolute; /* Position absolutely within main-content */
+            top: 20px;
+            left: 0;
+            box-sizing: border-box; /* Include padding in width */
+        }
+
+        .topbar input[type="text"] {
+            flex-grow: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            margin-right: 15px;
+            background-color: #3e5060; /* Slightly lighter input background */
+            color: white;
+        }
+
+        .topbar input[type="text"]::placeholder {
+            color: #bbb;
+        }
+
+        .profile-btn {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .profile-btn:hover {
+            background-color: #2980b9;
+        }
+
+        .profile-btn i {
+            margin-left: 8px;
+        }
+
+        h2 {
+            color: #ecf0f1;
+            padding: 20px 0;
+            text-align: center;
+            font-size: 2.2rem;
+            margin-top: 80px; /* Adjust for topbar */
+            z-index: 1; /* Ensure it's above canvas if needed */
+        }
+
+        /* Emotion Tracker Specific Styles */
+        .emotion-tracker-container {
+            background-color: #1a2a3a;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            padding: 30px;
+            margin-top: 20px;
+            width: 90%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        #videoElement {
+            width: 100%;
+            max-width: 640px;
+            height: auto;
+            border-radius: 10px;
+            background-color: #000;
+            transform: scaleX(-1); /* Mirror the video */
+        }
+
+        #overlayCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Allow clicks to pass through to video */
+            transform: scaleX(-1); /* Mirror the canvas to match video */
+        }
+
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 640px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .emotion-display {
+            width: 100%;
+            max-width: 640px;
+            background-color: #2c3e50;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+        }
+
+        .emotion-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .emotion-name {
+            font-weight: 600;
+            color: #ecf0f1;
+            flex-basis: 30%;
+            text-align: left;
+        }
+
+        .emotion-bar-container {
+            flex-grow: 1;
+            height: 15px;
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 0 10px;
+        }
+
+        .emotion-bar {
+            height: 100%;
+            background-color: #3498db; /* Default blue */
+            border-radius: 5px;
+            transition: width 0.3s ease-out;
+        }
+
+        .emotion-percentage {
+            font-weight: 700;
+            color: #00f0ff;
+            flex-basis: 15%;
+            text-align: right;
+        }
+
+        .status-message {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #f39c12;
+            margin-top: 10px;
+        }
+
+        /* Color coding for emotion bars */
+        .emotion-bar.happy { background-color: #2ecc71; } /* Green */
+        .emotion-bar.neutral { background-color: #95a5a6; } /* Grey */
+        .emotion-bar.sad { background-color: #3498db; } /* Blue */
+        .emotion-bar.angry { background-color: #e74c3c; } /* Red */
+        .emotion-bar.fearful { background-color: #f39c12; } /* Orange */
+        .emotion-bar.disgusted { background-color: #8e44ad; } /* Purple */
+        .emotion-bar.surprised { background-color: #f1c40f; } /* Yellow */
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                box-shadow: none;
+            }
+            .main-content {
+                margin-left: 0;
+                padding-top: 0;
+            }
+            .topbar {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 10px;
+                position: relative;
+                top: 0;
+            }
+            .topbar input[type="text"] {
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+            h2 {
+                margin-top: 20px;
+            }
+            .emotion-tracker-container {
+                padding: 15px;
+            }
+            .emotion-item {
+                flex-direction: column;
+                align-items: flex-start;
+                margin-bottom: 15px;
+            }
+            .emotion-name {
+                flex-basis: auto;
+                margin-bottom: 5px;
+            }
+            .emotion-bar-container {
+                width: 100%;
+                margin: 0;
+            }
+            .emotion-percentage {
+                flex-basis: auto;
+                width: 100%;
+                text-align: left;
+                margin-top: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h2>🏥 MediMind</h2>
+            <ul>
+                <li onclick="navigate('index.html')">🏠 Dashboard</li>
+                <li onclick="navigate('upload.html')">📁 Upload Records</li>
+                <li onclick="navigate('analytics.html')">📊 Health Analytics</li>
+                <li onclick="navigate('pill.html')">💊 Pill Reminder</li>
+                <li onclick="navigate('chatbot.html')">🤖 Chatbot</li>
+                <li onclick="navigate('workout.html')">🏋️‍♂️ Workout</li>
+                <li onclick="navigate('appointment.html')">📅 Appointment Reminder</li>
+                <li onclick="navigate('stress_relief_game.html')">🧘‍♀️ Stress Relief Game</li>
+                <li onclick="navigate('emotion_tracker.html')" class="active">😊 Emotional Well-being</li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <header class="topbar">
+                <input type="text" placeholder="Search health records..." />
+                <button class="profile-btn">Neha 👤</button>
+            </header>
+
+            <h2>😊 Emotional Well-being Tracker</h2>
+
+            <div class="emotion-tracker-container">
+                <p class="status-message" id="statusMessage">Loading facial recognition models...</p>
+                <div class="video-wrapper">
+                    <video id="videoElement" autoplay muted></video>
+                    <!-- Overlay canvas for drawing face detections (optional, but good for debugging) -->
+                    <canvas id="overlayCanvas"></canvas>
+                </div>
+                
+                <div class="emotion-display">
+                    <div class="emotion-item">
+                        <span class="emotion-name">Happy</span>
+                        <div class="emotion-bar-container"><div class="emotion-bar happy" id="happyBar"></div></div>
+                        <span class="emotion-percentage" id="happyPct">0%</span>
+                    </div>
+                    <div class="emotion-item">
+                        <span class="emotion-name">Neutral</span>
+                        <div class="emotion-bar-container"><div class="emotion-bar neutral" id="neutralBar"></div></div>
+                        <span class="emotion-percentage" id="neutralPct">0%</span>
+                    </div>
+                    <div class="emotion-item">
+                        <span class="emotion-name">Sad</span>
+                        <div class="emotion-bar-container"><div class="emotion-bar sad" id="sadBar"></div></div>
+                        <span class="emotion-percentage" id="sadPct">0%</span>
+                    </div>
+                    <div class="emotion-item">
+                        <span class="emotion-name">Angry</span>
+                        <div class="emotion-bar-container"><div class="emotion-bar angry" id="angryBar"></div></div>
+                        <span class="emotion-percentage" id="angryPct">0%</span>
+                    </div>
+                    <div class="emotion-item">
+                        <span class="emotion-name">Fearful</span>
+                        <div class="emotion-bar-container"><div class="emotion-bar fearful" id="fearfulBar"></div></div>
+                        <span class="emotion-percentage" id="fearfulPct">0%</span>
+                    </div>
+                    <div class="emotion-item">
+                        <span class="emotion-name">Disgusted</span>
+                        <div class="emotion-bar-container"><div class="emotion-bar disgusted" id="disgustedBar"></div></div>
+                        <span class="emotion-percentage" id="disgustedPct">0%</span>
+                    </div>
+                    <div class="emotion-item">
+                        <span class="emotion-name">Surprised</span>
+                        <div class="emotion-bar-container"><div class="emotion-bar surprised" id="surprisedBar"></div></div>
+                        <span class="emotion-percentage" id="surprisedPct">0%</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function navigate(page) {
+            window.location.href = page;
+        }
+
+        const video = document.getElementById('videoElement');
+        const overlayCanvas = document.getElementById('overlayCanvas');
+        const statusMessage = document.getElementById('statusMessage');
+        let displaySize;
+        let faceDetectionInterval;
+
+        // Model loading paths
+        const MODEL_URL = '/models'; // Assuming models are in a 'models' folder in your static directory
+
+        // Function to load models
+        async function loadModels() {
+            statusMessage.textContent = 'Loading facial recognition models... (This may take a moment)';
+            try {
+                await faceapi.nets.tinyFaceDetector.load(MODEL_URL);
+                await faceapi.nets.faceExpressionNet.load(MODEL_URL);
+                statusMessage.textContent = 'Models loaded! Starting camera...';
+                startCamera();
+            } catch (error) {
+                console.error('Error loading models:', error);
+                statusMessage.textContent = `Error loading models: ${error.message}. Please ensure the '/models' folder is accessible.`;
+            }
+        }
+
+        // Function to start camera stream
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+                video.addEventListener('play', () => {
+                    statusMessage.textContent = 'Camera started! Detecting emotions...';
+                    displaySize = { width: video.videoWidth, height: video.videoHeight };
+                    faceapi.matchDimensions(overlayCanvas, displaySize);
+                    faceDetectionInterval = setInterval(detectFaces, 100); // Detect every 100ms
+                });
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+                statusMessage.textContent = `Error accessing camera: ${err.message}. Please ensure camera access is allowed.`;
+            }
+        }
+
+        // Function to detect faces and expressions
+        async function detectFaces() {
+            if (video.paused || video.ended) {
+                clearInterval(faceDetectionInterval);
+                return;
+            }
+
+            const detections = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceExpressions();
+
+            const context = overlayCanvas.getContext('2d');
+            context.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+            if (detections) {
+                // Draw detection box (optional, for debugging/visual feedback)
+                const resizedDetections = faceapi.resizeResults(detections, displaySize);
+                // faceapi.draw.drawDetections(overlayCanvas, resizedDetections); // Draw face bounding box
+                
+                // Draw expressions
+                // faceapi.draw.drawFaceExpressions(overlayCanvas, resizedDetections); // Draw expressions on canvas
+
+                updateEmotionDisplay(resizedDetections.expressions);
+                statusMessage.textContent = 'Detecting emotions...';
+            } else {
+                updateEmotionDisplay(null); // Clear display if no face detected
+                statusMessage.textContent = 'No face detected. Please ensure your face is visible.';
+            }
+        }
+
+        // Function to update the UI with emotion percentages
+        function updateEmotionDisplay(expressions) {
+            const emotionNames = ['happy', 'neutral', 'sad', 'angry', 'fearful', 'disgusted', 'surprised'];
+            
+            if (!expressions) {
+                emotionNames.forEach(emotion => {
+                    document.getElementById(`${emotion}Bar`).style.width = '0%';
+                    document.getElementById(`${emotion}Pct`).textContent = '0%';
+                });
+                return;
+            }
+
+            const total = Object.values(expressions).reduce((sum, value) => sum + value, 0);
+
+            emotionNames.forEach(emotion => {
+                const score = expressions[emotion] || 0;
+                // Normalize score to a percentage, capping at 100% for display
+                const percentage = total > 0 ? Math.min(100, Math.round((score / total) * 100)) : 0;
+
+                const bar = document.getElementById(`${emotion}Bar`);
+                const pct = document.getElementById(`${emotion}Pct`);
+
+                bar.style.width = `${percentage}%`;
+                pct.textContent = `${percentage}%`;
+            });
+        }
+
+        // Start loading models when the window loads
+        window.addEventListener('load', loadModels);
+
+        // Cleanup on page unload (optional but good practice)
+        window.addEventListener('beforeunload', () => {
+            if (faceDetectionInterval) {
+                clearInterval(faceDetectionInterval);
+            }
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+            }
+        });
+    </script>
+</body>
+</html>
