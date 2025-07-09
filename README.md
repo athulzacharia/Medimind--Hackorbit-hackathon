@@ -1,7 +1,7 @@
 
 Medimind
 
-![Alt text for the image](image/1.png"login page")
+![medimind](image/1.png"login page")
 💡 Project Overview
 Medimind is a state-of-the-art, comprehensive health dashboard meticulously designed to empower individuals in proactively managing every facet of their health and well-being. In an increasingly complex healthcare landscape, Medimind stands out by offering a centralized, intelligent platform that not only streamlines health record management but also provides insightful analytics, integrates cutting-edge AI-powered tools, and delivers personalized reminders to foster a healthier, more informed lifestyle. It aims to be your trusted companion on your journey to optimal health.
 
