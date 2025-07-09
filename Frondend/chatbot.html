@@ -227,77 +227,69 @@
       }
       isLoading = show;
     }
+    async function translate(text, targetLang = 'en') {
+      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`;
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        return {
+          translated: data[0].map(t => t[0]).join(''),
+          detectedLang: data[2]
+        };
+      } catch (e) {
+        console.error("Translation Error:", e);
+        return { translated: text, detectedLang: 'en' };
+      }
+    }
 
     // Function to send a message to the Gemini API
     async function sendMessage() {
       const message = userInput.value.trim();
       if (message === '' || isLoading) return;
 
-      // Clear initial welcome message if present
       const initialMessage = chatMessages.querySelector('.h-full.text-gray-400');
-      if (initialMessage) {
-          initialMessage.remove();
-      }
+      if (initialMessage) initialMessage.remove();
 
       addMessage('user', message);
-      userInput.value = ''; // Clear input field
-      showLoading(true); // Show loading indicator
+      userInput.value = '';
+      showLoading(true);
 
       try {
-        const prompt = `You are a helpful medical inquiry assistant. Provide detailed, comprehensive, and accurate information for medical queries, symptoms, and medicines.
-        
-        When providing symptom-based queries, always include:
-        1. An introductory paragraph summarizing the condition.
-        2. A clear heading for "Possible Causes" using Markdown heading syntax (e.g., "## Possible Causes:").
-        3. A bulleted list of possible causes.
-        4. A clear heading for "What to do when you feel [symptom]:" using Markdown heading syntax.
-        5. A bulleted list of actions to take.
-        6. A clear heading for "When to seek medical attention:" using Markdown heading syntax.
-        7. A bulleted list of conditions that require medical attention.
-        8. Conclude every response with a disclaimer that this information is not a substitute for professional medical advice.
+        // 🌍 Step 1: Translate user input to English
+        const { translated: englishInput, detectedLang } = await translate(message, 'en');
 
-        Ensure all lists are properly formatted with standard Markdown bullet points (-) and headings use standard Markdown (#, ##, etc.). Avoid using double asterisks (**) for bolding within lists or paragraphs; use standard Markdown syntax for bolding if needed.
-
-User: ${message}
-
-Medical Assistant:`;
-
+        // 📤 Step 2: Send to Gemini
+        const prompt = `You are a helpful medical assistant. Respond clearly in Markdown format based on this query:\n\nUser: ${englishInput}`;
         const payload = {
           contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.7,
-            topP: 0.95,
-            topK: 40,
-          },
+          generationConfig: { temperature: 0.7, topP: 0.95, topK: 40 },
         };
 
-        // Use the API key injected by Flask
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
         const response = await fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload),
         });
 
         const result = await response.json();
+        const botReply = result?.candidates?.[0]?.content?.parts?.[0]?.text || null;
 
-        if (result.candidates && result.candidates.length > 0 &&
-            result.candidates[0].content && result.candidates[0].content.parts &&
-            result.candidates[0].content.parts.length > 0) {
-          const botResponseText = result.candidates[0].content.parts[0].text;
-          addMessage('bot', botResponseText, true); // Pass true to enable animation
+        if (botReply) {
+          // 🌍 Step 3: Translate Gemini’s reply back to original language
+          const { translated: finalResponse } = await translate(botReply, detectedLang);
+          addMessage('bot', finalResponse, true);
         } else {
-          console.error("Unexpected API response structure:", result);
-          addMessage('bot', "Sorry, I couldn't get a response. Please try again.");
+          addMessage('bot', "Sorry, I couldn't understand your query.");
         }
       } catch (error) {
-        console.error("Error calling Gemini API:", error);
-        addMessage('bot', "An error occurred while fetching the response. Please try again later.");
+        console.error("Gemini Error:", error);
+        addMessage('bot', "An error occurred. Please try again.");
       } finally {
-        showLoading(false); // Hide loading indicator
+        showLoading(false);
       }
     }
+
 
     // Event listeners
     sendButton.addEventListener('click', sendMessage);
