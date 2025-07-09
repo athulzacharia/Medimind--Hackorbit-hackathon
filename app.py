@@ -1,6 +1,4 @@
-# -------------------------
-# app.py (Enhanced with Analytics and Appointments)
-# -------------------------
+
 from flask import Flask, request, jsonify, send_from_directory, render_template
 from werkzeug.utils import secure_filename
 from flask_cors import CORS
@@ -16,14 +14,12 @@ import fitz  # PyMuPDF
 from collections import defaultdict
 import json
 
-# Load environment variables from .env file
 load_dotenv()
 
-# Twilio Configuration
-# CORRECTED: Get environment variables by their names, not hardcoded values
+
 TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
 TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
-TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER') # Your Twilio phone number
+TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER') 
 
 twilio_client = None
 if TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN:
@@ -56,7 +52,7 @@ ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
 
 # Database Configuration
 DATABASE = os.path.join(BASE_DIR, 'records.db')
-USER_DATABASE = os.path.join(BASE_DIR, 'users.db') # New database for user management
+USER_DATABASE = os.path.join(BASE_DIR, 'users.db') 
 
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
@@ -69,11 +65,11 @@ def get_user_db_connection():
     return conn
 
 def init_databases():
-    # Initialize main database (records.db)
+   
     conn_records = sqlite3.connect(DATABASE)
     c_records = conn_records.cursor()
     
-    # Create uploads table if it doesn't exist
+    
     c_records.execute('''CREATE TABLE IF NOT EXISTS uploads (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         filename TEXT,
@@ -82,7 +78,7 @@ def init_databases():
         structured_data TEXT DEFAULT '{}'
     )''')
     
-    # Create appointments table if it doesn't exist
+    
     c_records.execute("""CREATE TABLE IF NOT EXISTS appointments (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
@@ -93,7 +89,7 @@ def init_databases():
         created_at TEXT
     )""")
 
-    # Check and add 'structured_data' column to 'uploads' table if it doesn't exist
+    
     c_records.execute("PRAGMA table_info(uploads)")
     columns = [column[1] for column in c_records.fetchall()]
     if 'structured_data' not in columns:
@@ -102,7 +98,7 @@ def init_databases():
     conn_records.commit()
     conn_records.close()
 
-    # Initialize user database (users.db)
+    
     conn_users = sqlite3.connect(USER_DATABASE)
     c_users = conn_users.cursor()
     c_users.execute('''
@@ -116,7 +112,7 @@ def init_databases():
     conn_users.commit()
     conn_users.close()
 
-# Ensure databases are initialized when the app starts
+
 init_databases()
 
 def save_to_db(filename, content, structured_data=None):
@@ -184,10 +180,10 @@ def parse_structured_data(text):
         matches = re.findall(pattern, text, re.IGNORECASE | re.MULTILINE)
         if matches:
             if field in ['medication', 'diagnosis']:
-                # Handle multiple medications/diagnoses
+                
                 structured[field] = [match.strip() for match in matches if match.strip()]
             elif field == 'urine_protein':
-                # Handle qualitative urine protein results as a list
+                
                 structured[field] = [match.strip() for match in matches if match.strip()]
             else:
                 structured[field] = matches[0].strip()
@@ -211,9 +207,9 @@ def extract_health_data_from_file_content(file_path):
     except Exception as e:
         raw_text_content = f"Error extracting content: {str(e)}"
 
-    # Extract additional layers
+    
     summary = summarize_text(raw_text_content)
-    # Update keywords for highlighting
+    
     highlighted_text = highlight_keywords(raw_text_content, [
         'Blood Pressure', 'Glucose', 'Cholesterol', 'Diagnosis', 'Medication',
         'Dosage', 'Frequency', 'Follow-up', 'Doctor', 'Temperature', 'Heart Rate',
@@ -264,7 +260,7 @@ def get_analytics_data():
     conn = sqlite3.connect("records.db")
     c = conn.cursor()
     
-    # Check if structured_data column exists
+    
     c.execute("PRAGMA table_info(uploads)")
     columns = [column[1] for column in c.fetchall()]
     
@@ -279,7 +275,7 @@ def get_analytics_data():
     if not records:
         return jsonify({'has_data': False})
 
-    # Initialize analytics data structure with all metrics for frontend
+    
     analytics = {
         'has_data': True,
         'summary': {
@@ -292,7 +288,7 @@ def get_analytics_data():
             'dates': [],
             'systolic': [],
             'diastolic': [],
-            'values': [] # Store original string for display
+            'values': [] 
         },
         'glucose': {
             'dates': [],
@@ -346,7 +342,7 @@ def get_analytics_data():
         },
         'urine_protein': {
             'dates': [],
-            'values': [] # This will store qualitative values like 'Negative', '+', '++', etc.
+            'values': [] 
         },
         'vitamin_d': {
             'dates': [],
@@ -380,35 +376,35 @@ def get_analytics_data():
             'dates': [],
             'values': []
         },
-        'available_metrics': [], # To tell the frontend which charts to render
-        'recent_records': [] # Added initialization for 'recent_records'
+        'available_metrics': [], 
+        'recent_records': [] 
     }
 
-    # Process each record
+    
     all_medications = set()
     timeline_data = defaultdict(int)
     
     for record in records:
-        if len(record) == 4:  # New format with structured_data
+        if len(record) == 4:  
             filename, content, structured_json, timestamp = record
             try:
                 structured_data = json.loads(structured_json) if structured_json else {}
             except:
                 structured_data = {}
-        else:  # Old format without structured_data
+        else:  
             filename, content, timestamp = record
-            structured_data = parse_structured_data(content) # Re-parse old records to extract new metrics
+            structured_data = parse_structured_data(content) 
 
-        # Parse timestamp
+       
         try:
             record_date = datetime.fromisoformat(timestamp).strftime('%Y-%m-%d')
         except:
             record_date = datetime.now().strftime('%Y-%m-%d')
 
-        # Timeline data
+        
         timeline_data[record_date] += 1
 
-        # Generic function to extract and append numeric data
+        
         def add_numeric_metric(metric_key, unit=None, is_latest=False):
             if metric_key in structured_data and structured_data[metric_key]:
                 try:
@@ -427,7 +423,7 @@ def get_analytics_data():
                     pass
             return False
 
-        # Blood Pressure
+        
         if 'blood_pressure' in structured_data and structured_data['blood_pressure']:
             bp_value = structured_data['blood_pressure']
             if '/' in bp_value:
@@ -439,12 +435,12 @@ def get_analytics_data():
                     analytics['blood_pressure']['values'].append(f"{systolic}/{diastolic}")
                     if 'blood_pressure' not in analytics['available_metrics']:
                         analytics['available_metrics'].append('blood_pressure')
-                    if not analytics['summary']['latest_bp']: # Only set if not already set by a newer record
+                    if not analytics['summary']['latest_bp']: 
                         analytics['summary']['latest_bp'] = f"{systolic}/{diastolic}"
                 except:
                     pass
         
-        # Glucose - Update latest_glucose here from latest record
+        
         if 'glucose' in structured_data and structured_data['glucose']:
             try:
                 glucose_str = str(structured_data['glucose'])
@@ -455,13 +451,13 @@ def get_analytics_data():
                     analytics['glucose']['values'].append(glucose_value)
                     if 'glucose' not in analytics['available_metrics']:
                         analytics['available_metrics'].append('glucose')
-                    if not analytics['summary']['latest_glucose']: # Only set if not already set by a newer record
+                    if not analytics['summary']['latest_glucose']:
                         analytics['summary']['latest_glucose'] = f"{glucose_value} mg/dL"
             except:
                 pass
 
 
-        # New Metric Extraction and Population
+        
         add_numeric_metric('cholesterol', 'mg/dL')
         add_numeric_metric('heart_rate', 'bpm')
         add_numeric_metric('rbc_count', 'x10^6/uL')
@@ -481,9 +477,9 @@ def get_analytics_data():
         add_numeric_metric('alt', 'U/L')
         add_numeric_metric('ast', 'U/L')
 
-        # Urine Protein (special handling for qualitative values)
+       
         if 'urine_protein' in structured_data and structured_data['urine_protein']:
-            # Ensure it's a list for consistent processing
+            
             urine_proteins = structured_data['urine_protein'] if isinstance(structured_data['urine_protein'], list) else [structured_data['urine_protein']]
             for up_val in urine_proteins:
                 if up_val:
@@ -492,7 +488,7 @@ def get_analytics_data():
                     if 'urine_protein' not in analytics['available_metrics']:
                         analytics['available_metrics'].append('urine_protein')
 
-        # Medications
+        
         if 'medication' in structured_data and structured_data['medication']:
             medications = structured_data['medication']
             if isinstance(medications, list):
@@ -509,7 +505,7 @@ def get_analytics_data():
             if 'medications' not in analytics['available_metrics'] and analytics['medications']:
                 analytics['available_metrics'].append('medications')
 
-        # Diagnosis
+        
         if 'diagnosis' in structured_data and structured_data['diagnosis']:
             diagnoses = structured_data['diagnosis']
             if isinstance(diagnoses, list):
@@ -524,10 +520,7 @@ def get_analytics_data():
             if 'diagnosis' not in analytics['available_metrics'] and analytics['diagnosis']:
                 analytics['available_metrics'].append('diagnosis')
 
-        # Recent records - ensuring latest are shown and adding more details
-        # Ensure recent_records is populated for the dashboard summary
-        # This part should be outside the loop if you want only the latest 10 overall
-        # For now, keeping it inside to collect for each record, then sort later.
+        
         key_findings = []
         if 'blood_pressure' in structured_data and structured_data['blood_pressure']:
             key_findings.append(f"BP: {structured_data['blood_pressure']}")
@@ -545,16 +538,15 @@ def get_analytics_data():
             'key_findings': '; '.join(key_findings) if key_findings else 'No key findings extracted'
         })
     
-    # Sort recent records by date (descending) and take top 10
+    
     analytics['recent_records'].sort(key=lambda x: datetime.strptime(x['date'], '%Y-%m-%d'), reverse=True)
     analytics['recent_records'] = analytics['recent_records'][:10]
 
 
-    # Set active medications count
+    
     analytics['summary']['active_medications'] = len(all_medications)
 
-    # Process timeline data
-    # Sort timeline by date
+    
     sorted_timeline = sorted(timeline_data.items())
     analytics['timeline']['dates'] = [date for date, _ in sorted_timeline]
     analytics['timeline']['counts'] = [count for _, count in sorted_timeline]
@@ -633,8 +625,7 @@ def send_sms():
         return jsonify({'error': 'Missing phone number or message body'}), 400
 
     try:
-        # Validate phone number format (basic check)
-        # Twilio expects E.164 format, e.g., +1234567890
+        
         if not re.match(r'^\+\d{1,15}$', to_phone_number):
              return jsonify({'error': 'Invalid phone number format. Must be in E.164 format (e.g., +1234567890).'}), 400
 
@@ -657,7 +648,7 @@ def get_dashboard_summary():
         conn = get_db_connection()
         c = conn.cursor()
         
-        # Check if structured_data column exists
+        
         c.execute("PRAGMA table_info(uploads)")
         columns = [column[1] for column in c.fetchall()]
         
@@ -700,7 +691,7 @@ def get_dashboard_summary():
                                 all_unique_meds.add(med_name)
                 except:
                     continue
-        active_medications = len(all_unique_meds) # Corrected calculation for active medications
+        active_medications = len(all_unique_meds)
         
         return jsonify({
             'total_records': total_records,
