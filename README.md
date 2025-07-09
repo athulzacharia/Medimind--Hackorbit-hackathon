@@ -30,7 +30,7 @@ Visualized Trends: Future enhancements will include interactive charts and graph
 ![Medimind Login Page](image/7.png "Medimind Login Page")
 4. AI Doctor: Your Virtual Health Companion
 Interactive and Empathetic Consultation: Experience a revolutionary approach to medical guidance. Users can engage in natural language conversations, discussing their health concerns, symptoms, and diseases as if conversing with a human doctor.
-![Medimind Login Page](image/8.png "Medimind Login Page")
+![Medimind Login Page](image/20.png "Medimind Login Page")
 Comprehensive & Organized Reports: The AI Doctor leverages advanced natural language processing to understand your input and generates well-structured, easy-to-understand reports. These reports include potential insights, general advice, and answers to your specific queries, offering a new dimension of personalized and accessible health consultation.
 
 Information, Not Diagnosis: It's important to note that the AI Doctor provides informational support and general guidance, not a medical diagnosis. Users should always consult with a qualified healthcare professional for medical advice.
