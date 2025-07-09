@@ -4,9 +4,128 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>MediMind Pill Reminder</title>
-  <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
+    /* Global styles for the MediMind layout */
+    body {
+      font-family: 'Inter', sans-serif; /* Using Inter font */
+      margin: 0;
+      background: linear-gradient(135deg, #1a202c, #2d3748); /* Dark gradient background */
+      color: white; /* Default text color */
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .container {
+      display: flex;
+      flex-grow: 1;
+    }
+
+    .sidebar {
+      width: 250px;
+      background: rgba(0, 0, 0, 0.3); /* Slightly transparent dark sidebar */
+      padding: 20px;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .sidebar h2 {
+      color: #00f0ff; /* Accent color */
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 1.8em;
+      font-weight: bold;
+    }
+
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+      flex-grow: 1;
+    }
+
+    .sidebar ul li {
+      padding: 12px 15px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.1em;
+    }
+
+    .sidebar ul li:hover {
+      background: rgba(0, 240, 255, 0.2); /* Lighter accent on hover */
+      color: #00f0ff;
+      transform: translateX(5px);
+    }
+
+    .sidebar ul li.active {
+      background: linear-gradient(to right, #00f0ff, #00d0e0); /* Strong accent for active */
+      color: black;
+      font-weight: bold;
+      box-shadow: 0 4px 10px rgba(0, 240, 255, 0.4);
+    }
+
+    .main-content {
+      flex-grow: 1;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 15px 25px;
+      border-radius: 15px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .topbar input[type="text"] {
+      flex-grow: 1;
+      padding: 10px 15px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(0, 0, 0, 0.5);
+      color: white;
+      outline: none;
+      margin-right: 20px;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .topbar input[type="text"]:focus {
+      border-color: #00f0ff;
+      box-shadow: 0 0 0 2px rgba(0, 240, 255, 0.3);
+    }
+
+    .topbar input[type="text"]::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .profile-btn {
+      background: linear-gradient(to right, #00f0ff, #00d0e0);
+      color: black;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: none;
+    }
+
+    .profile-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 10px rgba(0, 240, 255, 0.3);
+    }
+
     /* Additional styles for pill reminder form and list */
     .pill-reminder-container {
       max-width: 800px;
@@ -130,6 +249,54 @@
     #pill-alert-message-container .close-btn:hover {
         background: rgba(0,0,0,0.1);
     }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        padding: 15px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .sidebar h2 {
+        margin-bottom: 20px;
+      }
+      .sidebar ul {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 5px;
+      }
+      .sidebar ul li {
+        padding: 8px 12px;
+        font-size: 0.9em;
+        margin-bottom: 5px;
+      }
+      .main-content {
+        padding: 15px;
+      }
+      .topbar {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 10px 15px;
+        margin-bottom: 20px;
+      }
+      .topbar input[type="text"] {
+        margin-right: 0;
+        margin-bottom: 10px;
+      }
+      .pill-reminder-container {
+        margin: 10px auto;
+        padding: 15px;
+      }
+      .add-reminder-card .grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -140,11 +307,11 @@
         <li onclick="navigate('index.html')">🏠 Dashboard</li>
         <li onclick="navigate('upload.html')">📁 Upload Records</li>
         <li onclick="navigate('analytics.html')">📊 Health Analytics</li>
-        <li onclick="navigate('aidoc.html')">👩🏻‍⚕️ AI Doctor</li>
+        <li onclick="navigate('aidoc.html')">👩🏻‍⚕ AI Doctor</li>
         <li onclick="navigate('chatbot.html')">🤖 Chatbot</li>
         <li onclick="navigate('pill.html')" class="active">💊 Pill Reminder</li>
-        <li onclick="navigate('appointment.html')">📅 Appointment Reminder</li> 
-        <li onclick="navigate('workout.html')">🏋️‍♂️ Workout</li>
+        <li onclick="navigate('appointment.html')">📅 Appointment Reminder</li>
+        <li onclick="navigate('workout.html')">🏋‍♂ Workout</li>
         <li onclick="navigate('stress_relief_game.html')">🎮 Game</li>
         <li onclick="navigate('emotion_tracker.html')">😊 Emotional Well-being</li>
       </ul>
@@ -158,7 +325,7 @@
 
       <div class="pill-reminder-container">
         <h2 class="text-3xl font-bold mb-6 text-center text-white">Pill Reminders</h2>
-        
+
         <div id="status-message-container">
             <p id="status-message" class="text-center"></p>
         </div>
@@ -227,12 +394,63 @@
       window.location.href = page;
     }
 
-    // Array to store reminders in memory (not persistent)
+    // Array to store reminders in memory. This will be loaded from/saved to localStorage.
     let reminders = [];
 
-    // --- Local Notification and Sound ---
-    const notificationSound = new Audio('/sounds/notifications.mp3'); // Path should be relative to your static files root
+    // Define a key for localStorage to store reminders
+    const REMINDERS_STORAGE_KEY = 'medimind_pill_reminders';
 
+    /**
+     * Saves the current reminders array to localStorage.
+     * The array is converted to a JSON string before saving.
+     */
+    function saveReminders() {
+        try {
+            localStorage.setItem(REMINDERS_STORAGE_KEY, JSON.stringify(reminders));
+            console.log("Reminders saved to localStorage.");
+        } catch (e) {
+            console.error("Error saving reminders to localStorage:", e);
+        }
+    }
+
+    /**
+     * Loads reminders from localStorage into the 'reminders' array.
+     * If data exists, it's parsed from JSON. 'lastTriggered' timestamps
+     * are converted back to Date objects for proper comparison.
+     */
+    function loadReminders() {
+        try {
+            const storedReminders = localStorage.getItem(REMINDERS_STORAGE_KEY);
+            if (storedReminders) {
+                reminders = JSON.parse(storedReminders);
+                // Ensure lastTriggered is a Date object if it exists and is not null
+                reminders.forEach(reminder => {
+                    if (reminder.lastTriggered) {
+                        reminder.lastTriggered = new Date(reminder.lastTriggered);
+                    }
+                });
+                console.log("Reminders loaded from localStorage.");
+            } else {
+                reminders = []; // If no data in storage, initialize as empty
+                console.log("No reminders found in localStorage. Starting with empty list.");
+            }
+        } catch (e) {
+            console.error("Error loading reminders from localStorage:", e);
+            reminders = []; // Fallback to empty array on error
+        }
+    }
+
+    // --- Local Notification and Sound ---
+    // Make sure the path to your sound file is correct.
+    // For a local development setup, it might be '/sounds/notifications.mp3'
+    // or if the sound is in the same directory, 'notifications.mp3'.
+    const notificationSound = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'); // Example public domain sound for testing
+
+    /**
+     * Requests permission for browser notifications.
+     * Updates the notification status message on the page.
+     * @returns {Promise<boolean>} True if permission is granted, false otherwise.
+     */
     async function requestNotificationPermission() {
         if (!("Notification" in window)) {
             console.warn("This browser does not support desktop notification");
@@ -266,7 +484,10 @@
         }
     }
 
-    // Function to request permission and immediately play sound (user interaction)
+    /**
+     * Requests notification permission and, if granted, plays a test sound
+     * and shows a test notification. This function is called by user interaction.
+     */
     async function requestNotificationPermissionAndPlaySound() {
         const granted = await requestNotificationPermission();
         if (granted) {
@@ -275,17 +496,21 @@
             // Also show a test notification
             new Notification('Test Notification!', {
                 body: 'This is a test notification from MediMind.',
-                icon: 'https://placehold.co/64x64/00f0ff/000000?text=💊'
+                icon: 'https://placehold.co/64x64/00f0ff/000000?text=💊' // Pill icon
             });
         }
     }
 
-    // Function to display the in-browser pill reminder alert
+    /**
+     * Displays an overlay alert message for pill reminders on the page.
+     * @param {string} medication - The name of the medication.
+     * @param {string} dosage - The dosage of the medication.
+     */
     function showPillAlert(medication, dosage) {
         const pillAlertContainer = document.getElementById('pill-alert-message-container');
         const pillAlertMessage = document.getElementById('pill-alert-message');
-        
-        pillAlertMessage.innerHTML = `Time to take your **${medication}**!<br>${dosage ? `Dosage: ${dosage}` : ''}`;
+
+        pillAlertMessage.innerHTML = `Time to take your *${medication}*!<br>${dosage ? Dosage: ${dosage} : ''}`;
         pillAlertContainer.classList.add('show');
         notificationSound.play().catch(e => console.error("Error playing sound (scheduled):", e));
 
@@ -295,17 +520,24 @@
         }, 10000); // Hide after 10 seconds automatically
     }
 
-    // Function to hide the in-browser pill reminder alert
+    /**
+     * Hides the in-browser pill reminder alert.
+     */
     function hidePillAlert() {
         const pillAlertContainer = document.getElementById('pill-alert-message-container');
         pillAlertContainer.classList.remove('show');
     }
 
+    /**
+     * Shows a web (desktop) notification if permission is granted.
+     * @param {string} medication - The name of the medication.
+     * @param {string} dosage - The dosage of the medication.
+     */
     function showWebNotification(medication, dosage) {
         // Check permission status directly before showing notification
         if (Notification.permission === "granted") {
             new Notification('Pill Reminder!', {
-                body: `Time to take your ${medication} (${dosage || 'no dosage specified'}).`,
+                body: Time to take your ${medication} (${dosage || 'no dosage specified'}).,
                 icon: 'https://placehold.co/64x64/00f0ff/000000?text=💊' // Pill icon
             });
             // Attempt to play sound, but it might be blocked if not user-initiated
@@ -317,16 +549,24 @@
         }
     }
 
-    // Helper function to convert 24-hour time to 12-hour (AM/PM) format
+    /**
+     * Helper function to convert 24-hour time to 12-hour (AM/PM) format.
+     * @param {string} time24hr - Time in HH:MM (24-hour) format.
+     * @returns {string} Formatted time in HH:MM AM/PM format.
+     */
     function formatTime12hr(time24hr) {
         if (!time24hr) return 'N/A';
         const [hours, minutes] = time24hr.split(':').map(Number);
         const ampm = hours >= 12 ? 'PM' : 'AM';
         const formattedHours = hours % 12 || 12; // Convert 0 to 12 for AM/PM
-        return `${formattedHours}:${String(minutes).padStart(2, '0')} ${ampm}`;
+        return ${formattedHours}:${String(minutes).padStart(2, '0')} ${ampm};
     }
 
     // --- Reminder Management (Local Storage) ---
+    /**
+     * Adds a new pill reminder based on form inputs.
+     * Validates inputs and saves the reminder to localStorage.
+     */
     function addReminder() {
         const medicationName = document.getElementById('medication-name').value.trim();
         const dosage = document.getElementById('dosage').value.trim();
@@ -343,7 +583,6 @@
             statusMessageContainer.classList.add('show'); // Show the message container
             setTimeout(() => {
                 statusMessageContainer.classList.remove('show');
-                //statusMessageElement.textContent = ''; // Clear message after it fades
             }, 3000); // Hide after 3 seconds
             return;
         }
@@ -360,6 +599,7 @@
         };
 
         reminders.push(newReminder); // Add to local array
+        saveReminders(); // Save the updated array to localStorage
         displayReminders(); // Update UI
 
         statusMessageElement.textContent = 'Reminder added successfully!';
@@ -367,12 +607,14 @@
         statusMessageContainer.classList.add('show'); // Show the message container
         setTimeout(() => {
             statusMessageContainer.classList.remove('show');
-            //statusMessageElement.textContent = ''; // Clear message after it fades
         }, 3000); // Hide after 3 seconds
 
         clearForm();
     }
 
+    /**
+     * Clears the input fields of the reminder form.
+     */
     function clearForm() {
         document.getElementById('medication-name').value = '';
         document.getElementById('dosage').value = '';
@@ -381,7 +623,10 @@
         document.getElementById('phone-number').value = '';
     }
 
-    // Function to display reminders from the local array
+    /**
+     * Displays reminders from the 'reminders' array in the UI.
+     * Clears existing list and re-renders all reminders.
+     */
     function displayReminders() {
         const remindersList = document.getElementById('reminders-list');
         remindersList.innerHTML = ''; // Clear current list
@@ -391,27 +636,34 @@
             return;
         }
 
-        reminders.forEach((reminder, index) => {
+        reminders.forEach((reminder) => {
             const reminderItem = document.createElement('div');
             reminderItem.classList.add('reminder-item', 'bg-gray-700', 'p-4', 'rounded-lg', 'mb-3', 'flex', 'justify-between', 'items-center');
             reminderItem.innerHTML = `
                 <div>
                     <p class="font-bold text-lg">${reminder.medicationName} (${reminder.dosage || 'N/A'})</p>
                     <p class="text-sm text-gray-300">Time: ${formatTime12hr(reminder.time)} | Frequency: ${reminder.frequency}</p>
-                    ${reminder.phoneNumber ? `<p class="text-xs text-gray-400">SMS to: ${reminder.phoneNumber}</p>` : ''}
+                    ${reminder.phoneNumber ? <p class="text-xs text-gray-400">SMS to: ${reminder.phoneNumber}</p> : ''}
                 </div>
                 <button class="delete-reminder-btn bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md transition duration-200" data-id="${reminder.id}">Delete</button>
             `;
             remindersList.appendChild(reminderItem);
         });
 
+        // Attach event listeners to newly created delete buttons
         document.querySelectorAll('.delete-reminder-btn').forEach(button => {
             button.onclick = (event) => deleteReminder(event.target.dataset.id);
         });
     }
 
+    /**
+     * Deletes a reminder from the 'reminders' array by its ID.
+     * Updates localStorage and re-displays reminders.
+     * @param {string} id - The ID of the reminder to delete.
+     */
     function deleteReminder(id) {
         reminders = reminders.filter(reminder => reminder.id !== id);
+        saveReminders(); // Save the updated array to localStorage
         displayReminders(); // Update UI
         const statusMessageElement = document.getElementById('status-message');
         const statusMessageContainer = document.getElementById('status-message-container');
@@ -420,12 +672,20 @@
         statusMessageContainer.classList.add('show'); // Show the message container
         setTimeout(() => {
             statusMessageContainer.classList.remove('show');
-            //statusMessageElement.textContent = ''; // Clear message after it fades
         }, 3000); // Hide after 3 seconds
     }
 
-    // --- SMS Notification via Flask Backend ---
+    // --- SMS Notification via Flask Backend (Placeholder) ---
+    /**
+     * Sends an SMS notification via a backend endpoint.
+     * This is a placeholder as the backend '/send_sms' is not provided in this HTML.
+     * @param {string} toPhoneNumber - The recipient's phone number.
+     * @param {string} messageBody - The message content.
+     */
     async function sendSmsNotification(toPhoneNumber, messageBody) {
+        console.log(Attempting to send SMS to ${toPhoneNumber}: "${messageBody}");
+        // This fetch call requires a backend server (e.g., Flask with Twilio)
+        // to actually send SMS. This client-side code alone cannot send SMS directly.
         try {
             const response = await fetch('/send_sms', {
                 method: 'POST',
@@ -444,52 +704,60 @@
                 console.error('SMS API Error:', result.error);
             }
         } catch (error) {
-            console.error('Network error sending SMS:', error);
+            console.error('Network error sending SMS (Is backend running?):', error);
         }
     }
 
     // --- Reminder Scheduling (Client-side Simulation) ---
-    // This will only work while the page is open.
+    // This interval checks for reminders every 10 seconds.
+    // It will only work while the page is open in the browser.
     setInterval(() => {
         const now = new Date();
         const currentHour = String(now.getHours()).padStart(2, '0');
         const currentMinute = String(now.getMinutes()).padStart(2, '0');
-        const currentTime24hr = `${currentHour}:${currentMinute}`;
+        const currentTime24hr = ${currentHour}:${currentMinute};
 
         reminders.forEach(reminder => {
+            // Ensure lastTriggered is a Date object for comparison
+            let reminderLastTriggered = reminder.lastTriggered instanceof Date ? reminder.lastTriggered : (reminder.lastTriggered ? new Date(reminder.lastTriggered) : null);
+
             // Check if reminder time matches current time and hasn't been triggered in the last minute
             if (reminder.frequency === 'Daily' && reminder.time === currentTime24hr) {
-                const lastTriggeredTime = reminder.lastTriggered ? new Date(reminder.lastTriggered) : null;
-                const oneMinuteAgo = new Date(now.getTime() - 60 * 1000);
+                const oneMinuteAgo = new Date(now.getTime() - 60 * 1000); // Check if triggered within the last minute
 
-                if (!lastTriggeredTime || lastTriggeredTime < oneMinuteAgo) {
-                    console.log(`Time for ${reminder.medicationName}! Triggering notifications.`);
-                    
+                if (!reminderLastTriggered || reminderLastTriggered < oneMinuteAgo) {
+                    console.log(Time for ${reminder.medicationName}! Triggering notifications.);
+
                     // Show the in-browser alert
                     showPillAlert(reminder.medicationName, reminder.dosage);
-                    
+
                     // Show web notification (desktop push notification)
                     showWebNotification(reminder.medicationName, reminder.dosage);
 
                     if (reminder.phoneNumber) {
-                        const smsMessage = `MediMind Reminder: It's time to take your ${reminder.medicationName} (${reminder.dosage || 'no dosage specified'}).`;
+                        const smsMessage = MediMind Reminder: It's time to take your ${reminder.medicationName} (${reminder.dosage || 'no dosage specified'}).;
                         sendSmsNotification(reminder.phoneNumber, smsMessage);
                     }
 
                     // Update lastTriggered timestamp to prevent immediate re-trigger
-                    reminder.lastTriggered = now.toISOString();
-                    // Re-display reminders to update the in-memory object (though not persistent)
-                    displayReminders();
+                    reminder.lastTriggered = now.toISOString(); // Store as ISO string for localStorage
+                    saveReminders(); // Save the updated reminder with new lastTriggered time
                 }
             }
-            // More complex logic would be needed for 'Weekly' or other frequencies
+            // Add logic for 'Weekly' or 'Monthly' frequencies here if needed.
+            // Example for 'Weekly':
+            // if (reminder.frequency === 'Weekly' && reminder.time === currentTime24hr && now.getDay() === /* specific day of week */) { ... }
         });
-    }, 10 * 1000); // Check every 10 seconds (changed from 60 seconds)
+    }, 10 * 1000); // Check every 10 seconds
 
-    // Initial display of reminders when the page loads
-    window.onload = displayReminders;
+    // Initial load and display of reminders when the page finishes loading
+    window.onload = () => {
+        loadReminders(); // Load reminders from localStorage
+        displayReminders(); // Display them in the UI
+        requestNotificationPermission(); // Check and update notification permission status on load
+    };
 
-    // Initial check for notification permission status on load
+    // Initial check for notification permission status when the DOM is fully loaded
     document.addEventListener('DOMContentLoaded', requestNotificationPermission);
   </script>
 </body>
