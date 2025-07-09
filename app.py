@@ -1,5 +1,5 @@
 # -------------------------
-# app.py (Enhanced with Analytics)
+# app.py (Enhanced with Analytics and Appointments)
 # -------------------------
 from flask import Flask, request, jsonify, send_from_directory, render_template
 from werkzeug.utils import secure_filename
@@ -54,33 +54,73 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
 
-# Database Initialization with migration support
-def init_db():
-    conn = sqlite3.connect("records.db")
-    c = conn.cursor()
+# Database Configuration
+DATABASE = os.path.join(BASE_DIR, 'records.db')
+USER_DATABASE = os.path.join(BASE_DIR, 'users.db') # New database for user management
+
+def get_db_connection():
+    conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def get_user_db_connection():
+    conn = sqlite3.connect(USER_DATABASE)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_databases():
+    # Initialize main database (records.db)
+    conn_records = sqlite3.connect(DATABASE)
+    c_records = conn_records.cursor()
     
-    # Create table if it doesn't exist
-    c.execute('''CREATE TABLE IF NOT EXISTS uploads (
+    # Create uploads table if it doesn't exist
+    c_records.execute('''CREATE TABLE IF NOT EXISTS uploads (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         filename TEXT,
         content TEXT,
-        timestamp TEXT
+        timestamp TEXT,
+        structured_data TEXT DEFAULT '{}'
     )''')
     
-    # Check if structured_data column exists, if not add it
-    c.execute("PRAGMA table_info(uploads)")
-    columns = [column[1] for column in c.fetchall()]
-    
-    if 'structured_data' not in columns:
-        c.execute("ALTER TABLE uploads ADD COLUMN structured_data TEXT")
-    
-    conn.commit()
-    conn.close()
+    # Create appointments table if it doesn't exist
+    c_records.execute("""CREATE TABLE IF NOT EXISTS appointments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        location TEXT,
+        time TEXT NOT NULL,
+        frequency TEXT NOT NULL,
+        phone TEXT,
+        created_at TEXT
+    )""")
 
-init_db()
+    # Check and add 'structured_data' column to 'uploads' table if it doesn't exist
+    c_records.execute("PRAGMA table_info(uploads)")
+    columns = [column[1] for column in c_records.fetchall()]
+    if 'structured_data' not in columns:
+        c_records.execute("ALTER TABLE uploads ADD COLUMN structured_data TEXT DEFAULT '{}'")
+    
+    conn_records.commit()
+    conn_records.close()
+
+    # Initialize user database (users.db)
+    conn_users = sqlite3.connect(USER_DATABASE)
+    c_users = conn_users.cursor()
+    c_users.execute('''
+        CREATE TABLE IF NOT EXISTS Users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            fullname TEXT NOT NULL,
+            email TEXT NOT NULL UNIQUE,
+            password TEXT NOT NULL
+        )
+    ''')
+    conn_users.commit()
+    conn_users.close()
+
+# Ensure databases are initialized when the app starts
+init_databases()
 
 def save_to_db(filename, content, structured_data=None):
-    conn = sqlite3.connect("records.db")
+    conn = get_db_connection()
     c = conn.cursor()
     structured_json = json.dumps(structured_data) if structured_data else None
     c.execute("INSERT INTO uploads (filename, content, structured_data, timestamp) VALUES (?, ?, ?, ?)",
@@ -534,7 +574,7 @@ def delete_record(filename):
     if os.path.exists(filepath):
         os.remove(filepath)
         # Also remove from database
-        conn = sqlite3.connect("records.db")
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("DELETE FROM uploads WHERE filename = ?", (filename,))
         conn.commit()
@@ -552,6 +592,13 @@ def serve_login():
 def serve_dashboard():
     return send_from_directory(app.static_folder, 'index.html')
 
+@app.route('/aidoc.html')
+def serve_aidoc():
+    gemini_api_key = os.getenv('GEMINI_API_KEY')
+    if not gemini_api_key:
+        return "API Key not configured. Please check your .env file.", 500
+    return render_template('aidoc.html', gemini_api_key=gemini_api_key)
+
 @app.route('/chatbot.html')
 def serve_chatbot():
     gemini_api_key = os.getenv('GEMINI_API_KEY')
@@ -563,12 +610,21 @@ def serve_chatbot():
 def serve_pill_reminder():
     return send_from_directory(app.static_folder, 'pill.html')
 
+@app.route('/workout.html')
+def serve_workout_page():
+    return send_from_directory(app.static_folder, 'workout.html')
+
+@app.route('/appointment.html')
+def serve_appointment_reminder():
+    return send_from_directory(app.static_folder, 'appointment.html')
+
+
 @app.route('/send_sms', methods=['POST'])
 def send_sms():
     if not twilio_client:
         # This will now correctly trigger if env vars are truly missing or client initialization failed
         return jsonify({'error': 'SMS service not configured. Twilio credentials missing or invalid.'}), 500
-
+    
     data = request.get_json()
     to_phone_number = data.get('to_phone_number')
     message_body = data.get('message_body')
@@ -598,7 +654,7 @@ def send_sms():
 def get_dashboard_summary():
     """Get a quick summary for dashboard display"""
     try:
-        conn = sqlite3.connect("records.db")
+        conn = get_db_connection()
         c = conn.cursor()
         
         # Check if structured_data column exists
@@ -656,79 +712,56 @@ def get_dashboard_summary():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# Connection for user management (medimind.db) - Added from initial request, ensure it's here
-def get_user_db_connection():
-    return sqlite3.connect("medimind.db")
-
-# Unified Database Initialization - Combined for both databases
-def init_databases():
-    # Initialize Users table
-    conn_users = get_user_db_connection()
-    cursor_users = conn_users.cursor()
-    cursor_users.execute('''
-        CREATE TABLE IF NOT EXISTS Users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            fullname TEXT NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL
-        )
-    ''')
-    conn_users.commit()
-    conn_users.close()
-
-    # Initialize Uploads table with migration support
-    conn_records = sqlite3.connect("records.db") # Use specific connection for records
-    c_records = conn_records.cursor()
-    
-    # Create table if it doesn't exist
-    c_records.execute('''CREATE TABLE IF NOT EXISTS uploads (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        filename TEXT,
-        content TEXT,
-        timestamp TEXT
-    )''')
-    c_records.execute("PRAGMA table_info(uploads)")
-    columns = [column[1] for column in c_records.fetchall()]
-    
-    if 'structured_data' not in columns:
-        c_records.execute("ALTER TABLE uploads ADD COLUMN structured_data TEXT")
-    
-    conn_records.commit()
-    conn_records.close()
-
-# Ensure databases are initialized when the app starts
-init_databases()
-
-
-@app.route('/<path:filename>')
-def serve_static_files(filename):
-    full_path = os.path.join(app.static_folder, filename)
-    if not os.path.isfile(full_path):
-        return "File not found", 404
-    return send_from_directory(app.static_folder, filename)
-
-# Placeholder for signup, assuming it's part of the original code not fully provided
-@app.route('/signup', methods=['POST'])
-def signup():
+# Appointment Reminder Routes
+@app.route('/add_appointment', methods=['POST'])
+def add_appointment():
     data = request.get_json()
-    fullname = data.get('fullname')
-    email = data.get('email')
-    password = data.get('password')
+    title = data.get('title')
+    location = data.get('location')
+    time = data.get('time')
+    frequency = data.get('frequency')
+    phone = data.get('phone')
 
-    if not all([fullname, email, password]):
-        return jsonify({"message": "Missing required fields"}), 400
-    conn = get_user_db_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute("INSERT INTO Users (fullname, email, password) VALUES (?, ?, ?)", (fullname, email, password))
-        conn.commit()
-        return jsonify({"message": "User registered successfully"}), 201
-    except sqlite3.IntegrityError:
-        return jsonify({"message": "Email already registered"}), 409
-    except Exception as e:
-        return jsonify({"message": f"Error registering user: {e}"}), 500
-    finally:
-        conn.close()
+    if not title or not time or not frequency:
+        return jsonify({'error': 'Missing required fields'}), 400
+
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute("INSERT INTO appointments (title, location, time, frequency, phone, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+              (title, location, time, frequency, phone, datetime.now().isoformat()))
+    conn.commit()
+    conn.close()
+
+    return jsonify({'message': 'Appointment saved successfully'}), 200
+
+
+@app.route('/appointments', methods=['GET'])
+def get_appointments():
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute("SELECT id, title, location, time, frequency, phone FROM appointments ORDER BY created_at DESC")
+    appointments = [
+        {'id': row[0], 'title': row[1], 'location': row[2], 'time': row[3],
+         'frequency': row[4], 'phone': row[5]}
+        for row in c.fetchall()
+    ]
+    conn.close()
+    return jsonify(appointments)
+
+@app.route('/delete_appointment/<int:appointment_id>', methods=['DELETE'])
+def delete_appointment(appointment_id):
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute("DELETE FROM appointments WHERE id = ?", (appointment_id,))
+    conn.commit()
+    deleted_count = c.rowcount
+    conn.close()
+
+    if deleted_count > 0:
+        return jsonify({'message': 'Appointment deleted successfully'}), 200
+    else:
+        return jsonify({'error': 'Appointment not found'}), 404
+
 
 if __name__ == '__main__':
     app.run(debug=True)
