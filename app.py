@@ -120,7 +120,24 @@ def parse_structured_data(text):
         'temperature': r'(?:Temperature|Temp):?\s*(\d+\.?\d*)\s*°?[CF]?',
         'heart_rate': r'(?:Heart Rate|Pulse|HR):?\s*(\d+)(?:\s*bpm)?',
         'weight': r'Weight:?\s*(\d+\.?\d*)\s*(?:kg|lbs)?',
-        'height': r'Height:?\s*(\d+\.?\d*)\s*(?:cm|ft|in)?'
+        'height': r'Height:?\s*(\d+\.?\d*)\s*(?:cm|ft|in)?',
+        'rbc_count': r'(?:RBC Count|Red Blood Cell Count):?\s*(\d+\.?\d*)\s*(?:x10\^6/uL|million/uL)?',
+        'wbc_count': r'(?:WBC Count|White Blood Cell Count):?\s*(\d+\.?\d*)\s*(?:x10\^3/uL|thousand/uL)?',
+        'hemoglobin': r'(?:Hemoglobin|Hb):?\s*(\d+\.?\d*)\s*(?:g/dL)?',
+        'platelets': r'(?:Platelets|Platelet Count):?\s*(\d+)(?:\s*x10\^3/uL)?',
+        'creatinine': r'(?:Creatinine):?\s*(\d+\.?\d*)\s*(?:mg/dL)?',
+        'blood_sugar_fasting': r'(?:Fasting Blood Sugar|FBS):?\s*(\d+)(?:\s*mg/dL)?',
+        'blood_sugar_post_prandial': r'(?:Post-prandial Blood Sugar|PPBS):?\s*(\d+)(?:\s*mg/dL)?',
+        'hba1c': r'(?:HbA1c|Glycated Hemoglobin):?\s*(\d+\.?\d*)\s*(?:%)?',
+        'urine_protein': r'(?:Urine Protein|Protein in Urine):?\s*(Negative|Trace|\+\+|Positive|\d\+)', # Can be qualitative or quantitative
+        'vitamin_d': r'(?:Vitamin D|Vit D):?\s*(\d+\.?\d*)\s*(?:ng/mL)?',
+        'tsh': r'(?:TSH|Thyroid Stimulating Hormone):?\s*(\d+\.?\d*)\s*(?:mIU/L|uIU/mL)?',
+        'calcium': r'(?:Calcium):?\s*(\d+\.?\d*)\s*(?:mg/dL)?',
+        'potassium': r'(?:Potassium|K):?\s*(\d+\.?\d*)\s*(?:mmol/L)?',
+        'sodium': r'(?:Sodium|Na):?\s*(\d+\.?\d*)\s*(?:mmol/L)?',
+        'bilirubin': r'(?:Bilirubin):?\s*(\d+\.?\d*)\s*(?:mg/dL)?',
+        'alt': r'(?:ALT|Alanine Aminotransferase):?\s*(\d+)(?:\s*U/L)?',
+        'ast': r'(?:AST|Aspartate Aminotransferase):?\s*(\d+)(?:\s*U/L)?'
     }
 
     for field, pattern in patterns.items():
@@ -128,6 +145,9 @@ def parse_structured_data(text):
         if matches:
             if field in ['medication', 'diagnosis']:
                 # Handle multiple medications/diagnoses
+                structured[field] = [match.strip() for match in matches if match.strip()]
+            elif field == 'urine_protein':
+                # Handle qualitative urine protein results as a list
                 structured[field] = [match.strip() for match in matches if match.strip()]
             else:
                 structured[field] = matches[0].strip()
@@ -153,9 +173,14 @@ def extract_health_data_from_file_content(file_path):
 
     # Extract additional layers
     summary = summarize_text(raw_text_content)
+    # Update keywords for highlighting
     highlighted_text = highlight_keywords(raw_text_content, [
         'Blood Pressure', 'Glucose', 'Cholesterol', 'Diagnosis', 'Medication',
-        'Dosage', 'Frequency', 'Follow-up', 'Doctor', 'Temperature', 'Heart Rate'
+        'Dosage', 'Frequency', 'Follow-up', 'Doctor', 'Temperature', 'Heart Rate',
+        'RBC Count', 'WBC Count', 'Hemoglobin', 'Platelets', 'Creatinine',
+        'Fasting Blood Sugar', 'Post-prandial Blood Sugar', 'HbA1c',
+        'Urine Protein', 'Vitamin D', 'TSH', 'Calcium', 'Potassium', 'Sodium',
+        'Bilirubin', 'ALT', 'AST'
     ])
     structured_data = parse_structured_data(raw_text_content)
 
@@ -214,7 +239,7 @@ def get_analytics_data():
     if not records:
         return jsonify({'has_data': False})
 
-    # Initialize analytics data structure
+    # Initialize analytics data structure with all metrics for frontend
     analytics = {
         'has_data': True,
         'summary': {
@@ -227,7 +252,7 @@ def get_analytics_data():
             'dates': [],
             'systolic': [],
             'diastolic': [],
-            'values': []
+            'values': [] # Store original string for display
         },
         'glucose': {
             'dates': [],
@@ -243,7 +268,80 @@ def get_analytics_data():
             'dates': [],
             'counts': []
         },
-        'recent_records': []
+        'heart_rate': {
+            'dates': [],
+            'values': []
+        },
+        'rbc_count': {
+            'dates': [],
+            'values': []
+        },
+        'wbc_count': {
+            'dates': [],
+            'values': []
+        },
+        'hemoglobin': {
+            'dates': [],
+            'values': []
+        },
+        'platelets': {
+            'dates': [],
+            'values': []
+        },
+        'creatinine': {
+            'dates': [],
+            'values': []
+        },
+        'blood_sugar_fasting': {
+            'dates': [],
+            'values': []
+        },
+        'blood_sugar_post_prandial': {
+            'dates': [],
+            'values': []
+        },
+        'hba1c': {
+            'dates': [],
+            'values': []
+        },
+        'urine_protein': {
+            'dates': [],
+            'values': [] # This will store qualitative values like 'Negative', '+', '++', etc.
+        },
+        'vitamin_d': {
+            'dates': [],
+            'values': []
+        },
+        'tsh': {
+            'dates': [],
+            'values': []
+        },
+        'calcium': {
+            'dates': [],
+            'values': []
+        },
+        'potassium': {
+            'dates': [],
+            'values': []
+        },
+        'sodium': {
+            'dates': [],
+            'values': []
+        },
+        'bilirubin': {
+            'dates': [],
+            'values': []
+        },
+        'alt': {
+            'dates': [],
+            'values': []
+        },
+        'ast': {
+            'dates': [],
+            'values': []
+        },
+        'available_metrics': [], # To tell the frontend which charts to render
+        'recent_records': [] # Added initialization for 'recent_records'
     }
 
     # Process each record
@@ -259,7 +357,7 @@ def get_analytics_data():
                 structured_data = {}
         else:  # Old format without structured_data
             filename, content, timestamp = record
-            structured_data = parse_structured_data(content)
+            structured_data = parse_structured_data(content) # Re-parse old records to extract new metrics
 
         # Parse timestamp
         try:
@@ -269,6 +367,25 @@ def get_analytics_data():
 
         # Timeline data
         timeline_data[record_date] += 1
+
+        # Generic function to extract and append numeric data
+        def add_numeric_metric(metric_key, unit=None, is_latest=False):
+            if metric_key in structured_data and structured_data[metric_key]:
+                try:
+                    value_str = str(structured_data[metric_key])
+                    numeric_match = re.search(r'(\d+\.?\d*)', value_str)
+                    if numeric_match:
+                        value = float(numeric_match.group(1))
+                        analytics[metric_key]['dates'].append(record_date)
+                        analytics[metric_key]['values'].append(value)
+                        if metric_key not in analytics['available_metrics']:
+                            analytics['available_metrics'].append(metric_key)
+                        if is_latest:
+                            analytics['summary'][f'latest_{metric_key}'] = f"{value} {unit}" if unit else str(value)
+                        return True
+                except ValueError:
+                    pass
+            return False
 
         # Blood Pressure
         if 'blood_pressure' in structured_data and structured_data['blood_pressure']:
@@ -280,11 +397,14 @@ def get_analytics_data():
                     analytics['blood_pressure']['systolic'].append(systolic)
                     analytics['blood_pressure']['diastolic'].append(diastolic)
                     analytics['blood_pressure']['values'].append(f"{systolic}/{diastolic}")
-                    analytics['summary']['latest_bp'] = f"{systolic}/{diastolic}"
+                    if 'blood_pressure' not in analytics['available_metrics']:
+                        analytics['available_metrics'].append('blood_pressure')
+                    if not analytics['summary']['latest_bp']: # Only set if not already set by a newer record
+                        analytics['summary']['latest_bp'] = f"{systolic}/{diastolic}"
                 except:
                     pass
-
-        # Glucose
+        
+        # Glucose - Update latest_glucose here from latest record
         if 'glucose' in structured_data and structured_data['glucose']:
             try:
                 glucose_str = str(structured_data['glucose'])
@@ -293,34 +413,61 @@ def get_analytics_data():
                     glucose_value = int(glucose_match.group(1))
                     analytics['glucose']['dates'].append(record_date)
                     analytics['glucose']['values'].append(glucose_value)
-                    analytics['summary']['latest_glucose'] = f"{glucose_value} mg/dL"
+                    if 'glucose' not in analytics['available_metrics']:
+                        analytics['available_metrics'].append('glucose')
+                    if not analytics['summary']['latest_glucose']: # Only set if not already set by a newer record
+                        analytics['summary']['latest_glucose'] = f"{glucose_value} mg/dL"
             except:
                 pass
 
-        # Cholesterol
-        if 'cholesterol' in structured_data and structured_data['cholesterol']:
-            try:
-                chol_str = str(structured_data['cholesterol'])
-                chol_match = re.search(r'(\d+)', chol_str)
-                if chol_match:
-                    chol_value = int(chol_match.group(1))
-                    analytics['cholesterol']['dates'].append(record_date)
-                    analytics['cholesterol']['values'].append(chol_value)
-            except:
-                pass
+
+        # New Metric Extraction and Population
+        add_numeric_metric('cholesterol', 'mg/dL')
+        add_numeric_metric('heart_rate', 'bpm')
+        add_numeric_metric('rbc_count', 'x10^6/uL')
+        add_numeric_metric('wbc_count', 'x10^3/uL')
+        add_numeric_metric('hemoglobin', 'g/dL')
+        add_numeric_metric('platelets', 'x10^3/uL')
+        add_numeric_metric('creatinine', 'mg/dL')
+        add_numeric_metric('blood_sugar_fasting', 'mg/dL')
+        add_numeric_metric('blood_sugar_post_prandial', 'mg/dL')
+        add_numeric_metric('hba1c', '%')
+        add_numeric_metric('vitamin_d', 'ng/mL')
+        add_numeric_metric('tsh', 'mIU/L')
+        add_numeric_metric('calcium', 'mg/dL')
+        add_numeric_metric('potassium', 'mmol/L')
+        add_numeric_metric('sodium', 'mmol/L')
+        add_numeric_metric('bilirubin', 'mg/dL')
+        add_numeric_metric('alt', 'U/L')
+        add_numeric_metric('ast', 'U/L')
+
+        # Urine Protein (special handling for qualitative values)
+        if 'urine_protein' in structured_data and structured_data['urine_protein']:
+            # Ensure it's a list for consistent processing
+            urine_proteins = structured_data['urine_protein'] if isinstance(structured_data['urine_protein'], list) else [structured_data['urine_protein']]
+            for up_val in urine_proteins:
+                if up_val:
+                    analytics['urine_protein']['dates'].append(record_date)
+                    analytics['urine_protein']['values'].append(up_val)
+                    if 'urine_protein' not in analytics['available_metrics']:
+                        analytics['available_metrics'].append('urine_protein')
 
         # Medications
         if 'medication' in structured_data and structured_data['medication']:
             medications = structured_data['medication']
             if isinstance(medications, list):
                 for med in medications:
-                    med_name = str(med).strip().split()[0]  # Get first word as medication name
+                    med_name = str(med).strip().split(',')[0].split('(')[0].strip() # More robust splitting for med name
+                    if med_name:
+                        analytics['medications'][med_name] = analytics['medications'].get(med_name, 0) + 1
+                        all_medications.add(med_name)
+            else:
+                med_name = str(medications).strip().split(',')[0].split('(')[0].strip()
+                if med_name:
                     analytics['medications'][med_name] = analytics['medications'].get(med_name, 0) + 1
                     all_medications.add(med_name)
-            else:
-                med_name = str(medications).strip().split()[0]
-                analytics['medications'][med_name] = analytics['medications'].get(med_name, 0) + 1
-                all_medications.add(med_name)
+            if 'medications' not in analytics['available_metrics'] and analytics['medications']:
+                analytics['available_metrics'].append('medications')
 
         # Diagnosis
         if 'diagnosis' in structured_data and structured_data['diagnosis']:
@@ -328,37 +475,51 @@ def get_analytics_data():
             if isinstance(diagnoses, list):
                 for diag in diagnoses:
                     diag_name = str(diag).strip()
-                    analytics['diagnosis'][diag_name] = analytics['diagnosis'].get(diag_name, 0) + 1
+                    if diag_name:
+                        analytics['diagnosis'][diag_name] = analytics['diagnosis'].get(diag_name, 0) + 1
             else:
                 diag_name = str(diagnoses).strip()
-                analytics['diagnosis'][diag_name] = analytics['diagnosis'].get(diag_name, 0) + 1
+                if diag_name:
+                    analytics['diagnosis'][diag_name] = analytics['diagnosis'].get(diag_name, 0) + 1
+            if 'diagnosis' not in analytics['available_metrics'] and analytics['diagnosis']:
+                analytics['available_metrics'].append('diagnosis')
 
-        # Recent records
-        if len(analytics['recent_records']) < 10:
-            key_findings = []
-            if 'blood_pressure' in structured_data and structured_data['blood_pressure']:
-                key_findings.append(f"BP: {structured_data['blood_pressure']}")
-            if 'glucose' in structured_data and structured_data['glucose']:
-                key_findings.append(f"Glucose: {structured_data['glucose']}")
-            if 'diagnosis' in structured_data and structured_data['diagnosis']:
-                if isinstance(structured_data['diagnosis'], list):
-                    key_findings.append(f"Diagnosis: {', '.join(structured_data['diagnosis'][:2])}")
-                else:
-                    key_findings.append(f"Diagnosis: {structured_data['diagnosis']}")
-            
-            analytics['recent_records'].append({
-                'date': record_date,
-                'filename': filename,
-                'key_findings': '; '.join(key_findings) if key_findings else 'No key findings extracted'
-            })
+        # Recent records - ensuring latest are shown and adding more details
+        # Ensure recent_records is populated for the dashboard summary
+        # This part should be outside the loop if you want only the latest 10 overall
+        # For now, keeping it inside to collect for each record, then sort later.
+        key_findings = []
+        if 'blood_pressure' in structured_data and structured_data['blood_pressure']:
+            key_findings.append(f"BP: {structured_data['blood_pressure']}")
+        if 'glucose' in structured_data and structured_data['glucose']:
+            key_findings.append(f"Glucose: {structured_data['glucose']}")
+        if 'diagnosis' in structured_data and structured_data['diagnosis']:
+            if isinstance(structured_data['diagnosis'], list):
+                key_findings.append(f"Diagnosis: {', '.join(structured_data['diagnosis'][:2])}")
+            else:
+                key_findings.append(f"Diagnosis: {structured_data['diagnosis']}")
+        
+        analytics['recent_records'].append({
+            'date': record_date,
+            'filename': filename,
+            'key_findings': '; '.join(key_findings) if key_findings else 'No key findings extracted'
+        })
+    
+    # Sort recent records by date (descending) and take top 10
+    analytics['recent_records'].sort(key=lambda x: datetime.strptime(x['date'], '%Y-%m-%d'), reverse=True)
+    analytics['recent_records'] = analytics['recent_records'][:10]
+
 
     # Set active medications count
     analytics['summary']['active_medications'] = len(all_medications)
 
     # Process timeline data
+    # Sort timeline by date
     sorted_timeline = sorted(timeline_data.items())
     analytics['timeline']['dates'] = [date for date, _ in sorted_timeline]
     analytics['timeline']['counts'] = [count for _, count in sorted_timeline]
+    if analytics['timeline']['dates']:
+        analytics['available_metrics'].append('timeline')
 
     return jsonify(analytics)
 
@@ -449,31 +610,41 @@ def get_dashboard_summary():
             total_records = c.fetchone()[0]
             
             c.execute("SELECT structured_data FROM uploads WHERE structured_data IS NOT NULL ORDER BY timestamp DESC LIMIT 10")
-            recent_records = c.fetchall()
+            recent_records_raw = c.fetchall()
         else:
             c.execute("SELECT COUNT(*) FROM uploads")
             total_records = c.fetchone()[0]
-            recent_records = []
+            recent_records_raw = []
         
         conn.close()
         
         # Quick stats
         latest_bp = None
         latest_glucose = None
-        active_medications = 0
+        all_unique_meds = set() # Initialize set for unique medications
         
-        for record in recent_records:
-            if record[0]:
+        for record_raw in recent_records_raw:
+            if record_raw[0]:
                 try:
-                    structured_data = json.loads(record[0])
-                    if not latest_bp and 'blood_pressure' in structured_data:
+                    structured_data = json.loads(record_raw[0])
+                    if not latest_bp and 'blood_pressure' in structured_data and structured_data['blood_pressure']:
                         latest_bp = structured_data['blood_pressure']
-                    if not latest_glucose and 'glucose' in structured_data:
+                    if not latest_glucose and 'glucose' in structured_data and structured_data['glucose']:
                         latest_glucose = structured_data['glucose']
-                    if 'medication' in structured_data:
-                        active_medications += 1
+                    if 'medication' in structured_data and structured_data['medication']:
+                        medications = structured_data['medication']
+                        if isinstance(medications, list):
+                            for m in medications:
+                                med_name = str(m).strip().split(',')[0].split('(')[0].strip()
+                                if med_name:
+                                    all_unique_meds.add(med_name)
+                        else:
+                            med_name = str(medications).strip().split(',')[0].split('(')[0].strip()
+                            if med_name:
+                                all_unique_meds.add(med_name)
                 except:
                     continue
+        active_medications = len(all_unique_meds) # Corrected calculation for active medications
         
         return jsonify({
             'total_records': total_records,
@@ -484,12 +655,80 @@ def get_dashboard_summary():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+# Connection for user management (medimind.db) - Added from initial request, ensure it's here
+def get_user_db_connection():
+    return sqlite3.connect("medimind.db")
+
+# Unified Database Initialization - Combined for both databases
+def init_databases():
+    # Initialize Users table
+    conn_users = get_user_db_connection()
+    cursor_users = conn_users.cursor()
+    cursor_users.execute('''
+        CREATE TABLE IF NOT EXISTS Users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            fullname TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL
+        )
+    ''')
+    conn_users.commit()
+    conn_users.close()
+
+    # Initialize Uploads table with migration support
+    conn_records = sqlite3.connect("records.db") # Use specific connection for records
+    c_records = conn_records.cursor()
+    
+    # Create table if it doesn't exist
+    c_records.execute('''CREATE TABLE IF NOT EXISTS uploads (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        filename TEXT,
+        content TEXT,
+        timestamp TEXT
+    )''')
+    c_records.execute("PRAGMA table_info(uploads)")
+    columns = [column[1] for column in c_records.fetchall()]
+    
+    if 'structured_data' not in columns:
+        c_records.execute("ALTER TABLE uploads ADD COLUMN structured_data TEXT")
+    
+    conn_records.commit()
+    conn_records.close()
+
+# Ensure databases are initialized when the app starts
+init_databases()
+
+
 @app.route('/<path:filename>')
 def serve_static_files(filename):
     full_path = os.path.join(app.static_folder, filename)
     if not os.path.isfile(full_path):
         return "File not found", 404
     return send_from_directory(app.static_folder, filename)
+
+# Placeholder for signup, assuming it's part of the original code not fully provided
+@app.route('/signup', methods=['POST'])
+def signup():
+    data = request.get_json()
+    fullname = data.get('fullname')
+    email = data.get('email')
+    password = data.get('password')
+
+    if not all([fullname, email, password]):
+        return jsonify({"message": "Missing required fields"}), 400
+    conn = get_user_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("INSERT INTO Users (fullname, email, password) VALUES (?, ?, ?)", (fullname, email, password))
+        conn.commit()
+        return jsonify({"message": "User registered successfully"}), 201
+    except sqlite3.IntegrityError:
+        return jsonify({"message": "Email already registered"}), 409
+    except Exception as e:
+        return jsonify({"message": f"Error registering user: {e}"}), 500
+    finally:
+        conn.close()
 
 if __name__ == '__main__':
     app.run(debug=True)
