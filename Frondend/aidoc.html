@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MediMind - AI Doctor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Custom styles for consistent medical interface */
+    .sidebar {
+      background: #212e44;
+      width: 320px;
+      min-height: 100vh;
+      position: fixed;
+      left: 0;
+      top: 0;
+      padding: 1.5rem;
+      color: white;
+      overflow-y: auto;
+    }
+
+    .sidebar::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .sidebar::-webkit-scrollbar-track {
+      background: #334155;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb {
+      background: #212e44;
+      border-radius: 3px;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb:hover {
+      background: #212e44;
+    }
+
+    .main-content {
+      margin-left: 320px;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1a2836 0%, #1a2836 100%);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .prose {
+      max-width: none;
+    }
+    .prose h1, .prose h2, .prose h3 {
+      color: #334155;
+      margin-top: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .prose p {
+      margin-bottom: 1rem;
+      line-height: 1.6;
+    }
+    .prose li {
+      margin-bottom: 0.5rem;
+    }
+    .prose strong {
+      color: #475569;
+    }
+    
+    /* Animation for loading states */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .animate-pulse {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    
+    /* Smooth transitions */
+    .transition-all {
+      transition: all 0.3s ease;
+    }
+    
+    /* Custom scrollbar for diagnosis output */
+    .diagnosis-output::-webkit-scrollbar {
+      width: 8px;
+    }
+    .diagnosis-output::-webkit-scrollbar-track {
+      background: #192736;
+      border-radius: 4px;
+    }
+    .diagnosis-output::-webkit-scrollbar-thumb {
+      background: #232f3e;
+      border-radius: 4px;
+    }
+    .diagnosis-output::-webkit-scrollbar-thumb:hover {
+      background: #253347;
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="flex items-center gap-3 mb-8">
+      <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center">
+        <span class="text-2xl text-blue-600">🏥</span>
+      </div>
+      <h2 class="text-2xl font-bold">MediMind</h2>
+    </div>
+    
+    <nav class="space-y-2">
+      <a href="index.html" class="flex items-center gap-3 p-3 rounded-lg hover:text-blue-200 transition-all duration-200">
+        <span class="text-xl">🏠</span>
+        <span class="font-medium">Dashboard</span>
+      </a>
+      <a href="upload.html" class="flex items-center gap-3 p-3 rounded-lg hover:text-blue-200 transition-all duration-200">
+        <span class="text-xl">📁</span>
+        <span class="font-medium">Upload Records</span>
+      </a>
+      <a href="analytics.html" class="flex items-center gap-3 p-3 rounded-lg hover:text-blue-200 transition-all duration-200">
+        <span class="text-xl">📊</span>
+        <span class="font-medium">Health Analytics</span>
+      </a>
+      <a href="aidoc.html" class="flex items-center gap-3 p-3 rounded-lg bg-blue-600 text-white border-l-4 border-blue-400">
+        <span class="text-xl">🤖</span>
+        <span class="font-medium">AI Doctor</span>
+      </a>
+      <a href="pill.html" class="flex items-center gap-3 p-3 rounded-lg hover:text-blue-200 transition-all duration-200">
+        <span class="text-xl">💊</span>
+        <span class="font-medium">Pill Reminder</span>
+      </a>
+      <a href="chatbot.html" class="flex items-center gap-3 p-3 rounded-lg hover:text-blue-200 transition-all duration-200">
+        <span class="text-xl">💬</span>
+        <span class="font-medium">Chatbot</span>
+      </a>
+      <a href="workout.html" class="flex items-center gap-3 p-3 rounded-lg hover:text-blue-200 transition-all duration-200">
+        <span class="text-xl">🏋️‍♂️</span>
+        <span class="font-medium">Workout</span>
+      </a>
+      <a href="appointment.html" class="flex items-center gap-3 p-3 rounded-lg hover:text-blue-200 transition-all duration-200">
+        <span class="text-xl">📅</span>
+        <span class="font-medium">Appointments</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="container">
+      <!-- Header -->
+      <header class="flex justify-between items-center mb-8">
+        <div class="relative flex-1 max-w-md">
+          <input type="text" placeholder="Search health records..." 
+                 class="w-full p-3 pl-12 border border-gray-300 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white transition duration-200">
+          <span class="absolute left-4 top-3 text-gray-400">🔍</span>
+        </div>
+        <div class="flex items-center gap-4">
+          <button class="p-3 bg-white rounded-full shadow-md hover:shadow-lg transition-shadow">
+            <span class="text-xl">🔔</span>
+          </button>
+          <button class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full shadow-lg transition-colors">
+            <span class="text-sm font-medium">Neha</span>
+            <span class="text-lg">👤</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- AI Doctor Section -->
+      <div class="bg-white rounded-xl shadow-lg overflow-hidden border-t-4 border-blue-500">
+        <!-- Doctor Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-teal-600 p-8 text-white">
+          <div class="flex items-center gap-6">
+            <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-lg">
+              <span class="text-3xl">👩‍⚕️</span>
+            </div>
+            <div>
+              <h1 class="text-4xl font-bold mb-2">Dr. Sana</h1>
+              <p class="text-blue-100 text-lg">AI Medical Assistant</p>
+              <p class="text-blue-200 text-sm mt-1">Get personalized health insights powered by AI</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Input Form -->
+        <div class="p-8">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div class="space-y-2">
+              <label class="text-sm font-semibold text-slate-700 block">Age Group</label>
+              <select id="age" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm transition duration-200">
+                <option value="">Select Age</option>
+                <option value="child">Under 12</option>
+                <option value="teen">13-19</option>
+                <option value="adult">20-59</option>
+                <option value="senior">60+</option>
+              </select>
+            </div>
+
+            <div class="space-y-2">
+              <label class="text-sm font-semibold text-slate-700 block">Gender</label>
+              <select id="gender" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm transition duration-200">
+                <option value="">Select Gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div class="space-y-2">
+              <label class="text-sm font-semibold text-slate-700 block">Duration</label>
+              <select id="duration" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm transition duration-200">
+                <option value="">Select Duration</option>
+                <option value="1-day">1 Day</option>
+                <option value="2-3-days">2-3 Days</option>
+                <option value="1-week">1 Week</option>
+                <option value=">1-week">More than 1 Week</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="space-y-2 mb-6">
+            <label class="text-sm font-semibold text-slate-700 block">Describe Your Symptoms</label>
+            <textarea id="symptoms" 
+                      class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm resize-none transition duration-200" 
+                      rows="5" 
+                      placeholder="Please describe your symptoms in detail. Include when they started, severity, and any other relevant information..."></textarea>
+          </div>
+
+          <div class="space-y-2 mb-6">
+            <label class="text-sm font-semibold text-slate-700 block">Upload Lab Reports (Optional)</label>
+            <div class="relative">
+              <input type="file" id="labfile" accept="application/pdf" class="hidden">
+              <button onclick="document.getElementById('labfile').click()" 
+                      class="w-full p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors bg-gray-50 hover:bg-blue-50">
+                <span class="text-gray-600">📄 Click to upload PDF files</span>
+              </button>
+            </div>
+          </div>
+
+          <button onclick="submitSymptoms()" 
+                  class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 px-8 rounded-lg font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
+            <span class="mr-2">🔍</span>
+            Get AI Diagnosis
+          </button>
+        </div>
+
+        <!-- Results Section -->
+        <div id="diagnosis-section" class="hidden p-8 bg-gradient-to-r from-blue-50 to-teal-50 border-t border-gray-200">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 bg-teal-600 rounded-full flex items-center justify-center">
+              <span class="text-white text-lg">✓</span>
+            </div>
+            <h3 class="text-xl font-bold text-slate-800">AI Diagnosis Results</h3>
+          </div>
+          <div id="diagnosis-output" class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+            <div class="text-gray-600">Your diagnosis will appear here...</div>
+          </div>
+        </div>
+
+        <!-- History Section -->
+        <div class="p-8 bg-slate-50 border-t border-gray-200">
+          <div class="flex items-center gap-3 mb-4">
+            <span class="text-2xl">📝</span>
+            <h3 class="text-xl font-bold text-slate-800">Recent Consultations</h3>
+          </div>
+          <div id="history" class="space-y-3">
+            <div class="text-gray-500 text-center py-4">No previous consultations yet</div>
+          </div>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="bg-yellow-50 border border-yellow-200 p-6 m-8 rounded-lg">
+          <div class="flex items-start gap-3">
+            <span class="text-yellow-600 text-xl">⚠️</span>
+            <div>
+              <h4 class="font-semibold text-yellow-800 mb-1">Important Medical Disclaimer</h4>
+              <p class="text-sm text-slate-700">This AI tool provides general health information and should not replace professional medical advice, diagnosis, or treatment. Always consult with qualified healthcare providers for medical concerns.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // IMPORTANT: Replace with your actual Google AI Studio API key
+    const apiKey = "{{ gemini_api_key }}"; // This will be replaced by Flask, or add your key directly
+    
+    // If Flask template is not used, uncomment and add your API key:
+    // const apiKey = "YOUR_GOOGLE_AI_STUDIO_API_KEY_HERE";
+
+    // Translation function for multilingual support
+    async function translate(text, targetLang = 'en') {
+      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`;
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        return {
+          translated: data[0].map(t => t[0]).join(''),
+          detectedLang: data[2]
+        };
+      } catch (e) {
+        console.error("Translation Error:", e);
+        return { translated: text, detectedLang: 'en' };
+      }
+    }
+
+    // Enhanced file processing (for future PDF processing)
+    async function processUploadedFile(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          // For now, we'll just return the file info
+          // In a full implementation, you'd extract text from PDF
+          resolve({
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            content: "File uploaded successfully. Content extraction would be implemented server-side."
+          });
+        };
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    async function submitSymptoms() {
+      const age = document.getElementById("age").value;
+      const gender = document.getElementById("gender").value;
+      const duration = document.getElementById("duration").value;
+      const symptoms = document.getElementById("symptoms").value;
+      const fileInput = document.getElementById("labfile");
+
+      // Validation
+      if (!age || !gender || !duration || !symptoms.trim()) {
+        alert("Please fill in all required fields");
+        return;
+      }
+
+      // Show loading state
+      const button = event.target;
+      const originalText = button.innerHTML;
+      button.innerHTML = '<span class="animate-spin">⏳</span> Analyzing...';
+      button.disabled = true;
+
+      try {
+        // Process uploaded file if any
+        let fileInfo = null;
+        if (fileInput.files && fileInput.files[0]) {
+          fileInfo = await processUploadedFile(fileInput.files[0]);
+        }
+
+        // Translate symptoms to English for better AI processing
+        const { translated: englishSymptoms, detectedLang } = await translate(symptoms, 'en');
+
+        // Create comprehensive medical prompt
+        let medicalPrompt = `
+As an AI medical assistant, please analyze the following patient information and provide a comprehensive assessment:
+
+PATIENT INFORMATION:
+- Age Group: ${age}
+- Gender: ${gender}
+- Symptom Duration: ${duration}
+- Symptoms: ${englishSymptoms}
+`;
+
+        // Add file information if available
+        if (fileInfo) {
+          medicalPrompt += `
+- Lab Report: ${fileInfo.name} (${fileInfo.type}) - ${fileInfo.content}
+`;
+        }
+
+        medicalPrompt += `
+Please provide a structured response in Markdown format including:
+
+## 🔍 PRELIMINARY ASSESSMENT
+- Most likely conditions based on symptoms
+- Severity level (mild, moderate, severe)
+
+## 🎯 POSSIBLE CAUSES
+- Primary differential diagnoses
+- Secondary considerations
+
+## 💡 RECOMMENDATIONS
+- Immediate care suggestions
+- When to seek medical attention
+- Lifestyle modifications
+
+## 🚨 RED FLAGS
+- Warning signs to watch for
+- When to seek emergency care
+
+## 📅 FOLLOW-UP
+- Suggested timeline for medical consultation
+- Tests that might be recommended
+
+## ⚠️ IMPORTANT DISCLAIMERS
+- This is an AI assessment and not a substitute for professional medical diagnosis
+- Always consult with qualified healthcare providers for proper diagnosis and treatment
+- Seek immediate medical attention for severe or concerning symptoms
+
+Please provide a clear, helpful, and medically sound response while emphasizing the importance of professional medical care.
+        `;
+
+        // Prepare payload for Gemini API
+        const payload = {
+          contents: [{ 
+            role: "user", 
+            parts: [{ text: medicalPrompt }] 
+          }],
+          generationConfig: { 
+            temperature: 0.3, // Lower temperature for more consistent medical responses
+            topP: 0.8, 
+            topK: 40,
+            maxOutputTokens: 2048
+          }
+        };
+
+        // Call Google AI Studio API
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        const result = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(`API Error: ${result.error?.message || 'Unknown error'}`);
+        }
+
+        const aiResponse = result?.candidates?.[0]?.content?.parts?.[0]?.text || null;
+
+        if (aiResponse) {
+          // Translate response back to original language if needed
+          const { translated: finalResponse } = detectedLang !== 'en' ? 
+            await translate(aiResponse, detectedLang) : 
+            { translated: aiResponse };
+
+          // Show results
+          document.getElementById("diagnosis-section").classList.remove("hidden");
+          
+          // Convert markdown to HTML for better display
+          const markdownContent = convertMarkdownToHTML(finalResponse);
+          document.getElementById("diagnosis-output").innerHTML = `
+            <div class="space-y-4">
+              <div class="prose prose-blue max-w-none">
+                ${markdownContent}
+              </div>
+              ${fileInfo ? `
+                <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <p class="text-sm text-blue-800">
+                    📄 <strong>File processed:</strong> ${fileInfo.name}
+                  </p>
+                </div>
+              ` : ''}
+            </div>
+          `;
+
+          // Add to history
+          addToHistory(symptoms, age, gender, duration, fileInfo);
+
+          // Smooth scroll to results
+          document.getElementById("diagnosis-section").scrollIntoView({ behavior: 'smooth' });
+        } else {
+          throw new Error('No response from AI');
+        }
+
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById("diagnosis-section").classList.remove("hidden");
+        document.getElementById("diagnosis-output").innerHTML = `
+          <div class="flex items-center gap-3 text-red-600">
+            <span class="text-xl">❌</span>
+            <div>
+              <p class="font-semibold">Sorry, there was an error processing your request.</p>
+              <p class="text-sm mt-1">Error: ${error.message}</p>
+              <p class="text-sm">Please check your API key and internet connection, or consult with a healthcare professional.</p>
+            </div>
+          </div>
+        `;
+      } finally {
+        // Reset button
+        button.innerHTML = originalText;
+        button.disabled = false;
+      }
+    }
+
+    // Simple markdown to HTML converter for basic formatting
+    function convertMarkdownToHTML(markdown) {
+      return markdown
+        // Headers
+        .replace(/^### (.*$)/gm, '<h3 class="text-lg font-bold text-slate-800 mt-4 mb-2">$1</h3>')
+        .replace(/^## (.*$)/gm, '<h2 class="text-xl font-bold text-slate-800 mt-6 mb-3">$1</h2>')
+        .replace(/^# (.*$)/gm, '<h1 class="text-2xl font-bold text-slate-800 mt-6 mb-4">$1</h1>')
+        
+        // Bold and italic
+        .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>')
+        
+        // Lists
+        .replace(/^- (.*$)/gm, '<li class="ml-4 mb-1">• $1</li>')
+        .replace(/^(\d+)\. (.*$)/gm, '<li class="ml-4 mb-1">$1. $2</li>')
+        
+        // Line breaks
+        .replace(/\n\n/g, '</p><p class="mb-3">')
+        .replace(/\n/g, '<br>')
+        
+        // Wrap in paragraphs
+        .replace(/^(?!<[h|l])/gm, '<p class="mb-3">')
+        .replace(/(?<!>)$/gm, '</p>')
+        
+        // Clean up extra tags
+        .replace(/<\/p><p class="mb-3"><\/p>/g, '</p>')
+        .replace(/<p class="mb-3"><\/p>/g, '');
+    }
+
+    function addToHistory(symptoms, age, gender, duration, fileInfo = null) {
+      const historyEl = document.getElementById("history");
+      
+      // Remove "no consultations" message if it exists
+      if (historyEl.innerHTML.includes("No previous consultations")) {
+        historyEl.innerHTML = "";
+      }
+
+      const historyItem = document.createElement("div");
+      historyItem.className = "bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer";
+      
+      const now = new Date();
+      const timeString = now.toLocaleString();
+      
+      historyItem.innerHTML = `
+        <div class="flex justify-between items-start mb-2">
+          <div class="flex items-center gap-2">
+            <span class="text-blue-600">👤</span>
+            <span class="font-semibold text-slate-800">${age}, ${gender}</span>
+          </div>
+          <span class="text-xs text-gray-500">${timeString}</span>
+        </div>
+        <div class="text-sm text-gray-600 mb-2">
+          <strong>Duration:</strong> ${duration}
+        </div>
+        <div class="text-sm text-slate-700 mb-2">
+          <strong>Symptoms:</strong> ${symptoms.length > 100 ? symptoms.substring(0, 100) + "..." : symptoms}
+        </div>
+        ${fileInfo ? `
+          <div class="text-xs text-blue-600 bg-blue-50 p-2 rounded">
+            📄 File: ${fileInfo.name}
+          </div>
+        ` : ''}
+      `;
+      
+      // Add click handler to expand/collapse details
+      historyItem.addEventListener('click', function() {
+        const isExpanded = this.classList.contains('expanded');
+        if (!isExpanded) {
+          this.classList.add('expanded');
+          const symptomsDiv = this.querySelector('.text-sm.text-slate-700');
+          symptomsDiv.innerHTML = `<strong>Symptoms:</strong> ${symptoms}`;
+        } else {
+          this.classList.remove('expanded');
+          const symptomsDiv = this.querySelector('.text-sm.text-slate-700');
+          symptomsDiv.innerHTML = `<strong>Symptoms:</strong> ${symptoms.length > 100 ? symptoms.substring(0, 100) + "..." : symptoms}`;
+        }
+      });
+      
+      historyEl.insertBefore(historyItem, historyEl.firstChild);
+      
+      // Keep only last 10 consultations
+      while (historyEl.children.length > 10) {
+        historyEl.removeChild(historyEl.lastChild);
+      }
+    }
+
+    // File upload handler
+    document.getElementById('labfile').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const button = e.target.previousElementSibling;
+        button.innerHTML = `<span class="text-teal-600">✓ ${file.name}</span>`;
+        button.classList.add('border-teal-600', 'bg-teal-50');
+      }
+    });
+  </script>
+</body>
+</html>
