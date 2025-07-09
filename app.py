@@ -19,6 +19,23 @@ import json
 # Load environment variables from .env file
 load_dotenv()
 
+# Twilio Configuration
+# CORRECTED: Get environment variables by their names, not hardcoded values
+TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
+TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
+TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER') # Your Twilio phone number
+
+twilio_client = None
+if TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN:
+    try:
+        twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+        print("Twilio client initialized successfully.")
+    except Exception as e:
+        print(f"Error initializing Twilio client: {e}")
+else:
+    print("Twilio credentials not found in environment variables. SMS functionality will be disabled.")
+
+
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 FRONTEND_DIR = os.path.join(BASE_DIR, 'frontend')
 UPLOAD_FOLDER_NAME = 'uploads'
@@ -384,6 +401,37 @@ def serve_chatbot():
 @app.route('/pill.html')
 def serve_pill_reminder():
     return send_from_directory(app.static_folder, 'pill.html')
+
+@app.route('/send_sms', methods=['POST'])
+def send_sms():
+    if not twilio_client:
+        # This will now correctly trigger if env vars are truly missing or client initialization failed
+        return jsonify({'error': 'SMS service not configured. Twilio credentials missing or invalid.'}), 500
+
+    data = request.get_json()
+    to_phone_number = data.get('to_phone_number')
+    message_body = data.get('message_body')
+
+    if not to_phone_number or not message_body:
+        return jsonify({'error': 'Missing phone number or message body'}), 400
+
+    try:
+        # Validate phone number format (basic check)
+        # Twilio expects E.164 format, e.g., +1234567890
+        if not re.match(r'^\+\d{1,15}$', to_phone_number):
+             return jsonify({'error': 'Invalid phone number format. Must be in E.164 format (e.g., +1234567890).'}), 400
+
+        message = twilio_client.messages.create(
+            to=to_phone_number,
+            from_=TWILIO_PHONE_NUMBER,
+            body=message_body
+        )
+        print(f"SMS sent successfully! SID: {message.sid}")
+        return jsonify({'message': 'SMS sent successfully', 'sid': message.sid}), 200
+    except Exception as e:
+        print(f"Error sending SMS: {e}")
+        return jsonify({'error': f'Failed to send SMS: {str(e)}'}), 500
+
 
 @app.route('/dashboard_summary', methods=['GET'])
 def get_dashboard_summary():
