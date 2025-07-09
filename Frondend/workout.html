@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Workout Planner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --secondary-color: #FF7043;
+            --accent-color: #2196F3;
+            --background-gradient: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+            --card-background: rgba(255, 255, 255, 0.1);
+            --text-dark: #ffffff;
+            --text-light: #666;
+            --border-radius-lg: 16px;
+            --border-radius-md: 12px;
+            --shadow-light: 0 8px 25px rgba(0,0,0,0.1);
+            --shadow-medium: 0 12px 35px rgba(0,0,0,0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--background-gradient);
+            min-height: 100vh;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header Styles */
+        .main-header {
+            text-align: center;
+            padding: 40px 0;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .main-header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .main-header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            animation: fadeInUp 1s ease-out 0.3s both;
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--card-background);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-medium);
+            padding: 30px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        }
+
+        /* Workout Selection */
+        .workout-selection h2 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+            font-size: 2rem;
+        }
+
+        .workout-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .workout-btn {
+            background: linear-gradient(135deg, var(--primary-color), #66BB6A);
+            color: white;
+            border: none;
+            padding: 25px;
+            border-radius: var(--border-radius-md);
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .workout-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(76, 175, 80, 0.4);
+        }
+
+        .workout-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .workout-btn:hover::before {
+            left: 100%;
+        }
+
+        .workout-btn i {
+            font-size: 1.5rem;
+            margin-right: 12px;
+        }
+
+        /* Active Workout Section */
+        .active-workout {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .active-workout.show {
+            display: block;
+        }
+
+        .workout-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .workout-title {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        .timer-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .timer-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: var(--border-radius-md);
+            text-align: center;
+            box-shadow: var(--shadow-light);
+        }
+
+        .timer-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .timer-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .progress-container {
+            background: rgba(255,255,255,0.3);
+            border-radius: 10px;
+            height: 20px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(45deg, var(--secondary-color), #FF8A65);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%);
+            animation: shimmer 2s infinite;
+        }
+
+        /* Exercise Display */
+        .exercise-display {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .exercise-name {
+            font-size: 2rem;
+            color: var(--secondary-color);
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .exercise-gif {
+            width: 100%;
+            max-width: 400px;
+            height: 300px; /* Adjusted height for better aspect ratio with GIFs */
+            border-radius: var(--border-radius-md);
+            box-shadow: var(--shadow-medium);
+            margin-bottom: 20px;
+            object-fit: contain; /* Changed to 'contain' to ensure full GIF is visible */
+            background-color: #000; /* Background for when GIF is not loaded or has transparent areas */
+        }
+
+        .exercise-description {
+            font-size: 1.1rem;
+            color: var(--text-light);
+            margin-bottom: 20px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .calorie-display {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .calorie-display i {
+            color: var(--secondary-color);
+            animation: burn 1.5s infinite;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            background: linear-gradient(135deg, var(--accent-color), #42A5F5);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: var(--border-radius-md);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(33, 150, 243, 0.4);
+        }
+
+        .control-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .control-btn i {
+            margin-right: 8px;
+        }
+
+        /* Status Indicators */
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-running { background: #4CAF50; animation: pulse 1s infinite; }
+        .status-paused { background: #FF9800; }
+        .status-break { background: #2196F3; animation: pulse 1s infinite; }
+        .status-completed { background: #9C27B0; }
+
+        /* Diet Plan Section */
+        .diet-plan h2 {
+            text-align: center;
+            color: var(--secondary-color);
+            margin-bottom: 30px;
+            font-size: 2rem;
+        }
+
+        .diet-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .diet-item {
+            background: linear-gradient(135deg, #e3f2fd, #f3e5f5);
+            padding: 20px;
+            border-radius: var(--border-radius-md);
+            border-left: 4px solid var(--primary-color);
+            transition: transform 0.3s ease;
+        }
+
+        .diet-item:hover {
+            transform: translateX(5px);
+        }
+
+        .diet-item h3 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .diet-item p {
+            color: var(--text-light);
+            line-height: 1.5;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes burn {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-header h1 { font-size: 2rem; }
+            .workout-title { font-size: 1.8rem; }
+            .timer-value { font-size: 2rem; }
+            .exercise-name { font-size: 1.5rem; }
+            .controls { flex-direction: column; align-items: center; }
+            .control-btn { width: 200px; }
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" style="
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background-color: #3b82f6;
+    color: white;
+    padding: 10px 18px;
+    font-size: 14px;
+    border: none;
+    border-radius: 6px;
+    text-decoration: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    ">
+    ⬅ Home
+    </a>
+    <div class="container">
+        <header class="main-header">
+            <h1><i class="fas fa-dumbbell"></i> FitLife Pro</h1>
+            <p>Your Ultimate Workout Companion</p>
+        </header>
+
+        <!-- Workout Selection -->
+        <div class="card workout-selection" id="workoutSelection">
+            <h2>Choose Your Fitness Challenge</h2>
+            <div class="workout-buttons">
+                <button class="workout-btn" onclick="selectWorkout('simple')">
+                    <i class="fas fa-running"></i>
+                    <div>
+                        <div>10 Minutes</div>
+                        <div style="font-size: 0.9rem; opacity: 0.8;">Simple & Effective</div>
+                    </div>
+                </button>
+                <button class="workout-btn" onclick="selectWorkout('intermediate')">
+                    <i class="fas fa-fire"></i>
+                    <div>
+                        <div>20 Minutes</div>
+                        <div style="font-size: 0.9rem; opacity: 0.8;">Intermediate Challenge</div>
+                    </div>
+                </button>
+                <button class="workout-btn" onclick="selectWorkout('difficult')">
+                    <i class="fas fa-dumbbell"></i>
+                    <div>
+                        <div>30 Minutes</div>
+                        <div style="font-size: 0.9rem; opacity: 0.8;">Extreme Challenge</div>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Active Workout -->
+        <div class="card active-workout" id="activeWorkout">
+            <div class="workout-header">
+                <h2 class="workout-title" id="workoutTitle">10-Minute Simple Workout</h2>
+                <div class="status-indicator status-running" id="statusIndicator"></div>
+                <span id="workoutStatus">Ready to Start</span>
+            </div>
+
+            <div class="timer-section">
+                <div class="timer-card">
+                    <div class="timer-label">Total Time</div>
+                    <div class="timer-value" id="totalTimer">10:00</div>
+                </div>
+                <div class="timer-card">
+                    <div class="timer-label">Current Exercise</div>
+                    <div class="timer-value" id="currentTimer">02:00</div>
+                </div>
+                <div class="timer-card">
+                    <div class="timer-label">Exercise Count</div>
+                    <div class="timer-value" id="exerciseCount">1 / 4</div>
+                </div>
+            </div>
+
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+            </div>
+
+            <div class="exercise-display">
+                <h3 class="exercise-name" id="exerciseName">Get Ready!</h3>
+                <img class="exercise-gif" id="exerciseGif" src="" alt="Exercise"> <!-- src will be set by JS -->
+                <p class="exercise-description" id="exerciseDescription">Prepare yourself for an amazing workout!</p>
+                <div class="calorie-display">
+                    <i class="fas fa-fire"></i>
+                    <span>Calories Burned: <span id="caloriesBurned">0</span></span>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="control-btn" id="playPauseBtn" onclick="playPause()">
+                    <i class="fas fa-play"></i> Start
+                </button>
+                <button class="control-btn" onclick="resetWorkout()">
+                    <i class="fas fa-redo"></i> Reset
+                </button>
+                <button class="control-btn" onclick="skipExercise()">
+                    <i class="fas fa-forward"></i> Skip
+                </button>
+                <button class="control-btn" onclick="goBack()">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+            </div>
+        </div>
+
+        <!-- Diet Plan -->
+        <div class="card diet-plan">
+            <h2><i class="fas fa-apple-alt"></i> Nutrition Guide</h2>
+            <div class="diet-grid">
+                <div class="diet-item">
+                    <h3><i class="fas fa-tint"></i> Hydration</h3>
+                    <p>Drink 8-10 glasses of water daily. Increase intake during workouts and hot weather.</p>
+                </div>
+                <div class="diet-item">
+                    <h3><i class="fas fa-drumstick-bite"></i> Lean Proteins</h3>
+                    <p>Include chicken, fish, eggs, tofu, and legumes for muscle repair and growth.</p>
+                </div>
+                <div class="diet-item">
+                    <h3><i class="fas fa-bread-slice"></i> Complex Carbs</h3>
+                    <p>Choose whole grains, sweet potatoes, and quinoa for sustained energy.</p>
+                </div>
+                <div class="diet-item">
+                    <h3><i class="fas fa-seedling"></i> Healthy Fats</h3>
+                    <p>Avocados, nuts, seeds, and olive oil provide essential fatty acids.</p>
+                </div>
+                <div class="diet-item">
+                    <h3><i class="fas fa-carrot"></i> Fruits & Vegetables</h3>
+                    <p>Aim for 5-9 servings daily for vitamins, minerals, and fiber.</p>
+                </div>
+                <div class="diet-item">
+                    <h3><i class="fas fa-clock"></i> Meal Timing</h3>
+                    <p>Pre-workout: Light snack 30-60 min before. Post-workout: Protein + carbs within 2 hours.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Workout data
+        const workouts = {
+            simple: {
+                title: "10-Minute Simple Workout",
+                totalTime: 600, // 10 minutes
+                exercises: [
+                    { name: "Jumping Jacks", duration: 120, break: 30, gif: "gifs/jumpingjack-1457045563.gif", description: "Full-body cardio exercise to warm up", calories: 15 },
+                    { name: "Push-ups", duration: 120, break: 30, gif: "gifs/Push-Ups-Gif.gif", description: "Strengthen chest, shoulders, and triceps", calories: 12 },
+                    { name: "Squats", duration: 120, break: 30, gif: "gifs/Jump-Squats-Gif.gif", description: "Target legs and glutes", calories: 18 },
+                    { name: "Plank", duration: 90, break: 0, gif: "gifs/planks.gif", description: "Core strengthening exercise", calories: 8 }
+                ]
+            },
+            intermediate: {
+                title: "20-Minute Intermediate Challenge",
+                totalTime: 1200, // 20 minutes
+                exercises: [
+                    { name: "High Knees", duration: 180, break: 45, gif: "gifs/c19f2c2bac0ca09f2381fb8281c8d1f0.gif", description: "High-intensity cardio warm-up", calories: 25 },
+                    { name: "Burpees", duration: 120, break: 60, gif: "gifs/Push-Up-Burpee.gif", description: "Full-body explosive exercise", calories: 30 },
+                    { name: "Mountain Climbers", duration: 150, break: 45, gif: "gifs/mountainclimber-14721303.gif", description: "Cardio and core strengthening", calories: 28 },
+                    { name: "Lunges", duration: 180, break: 45, gif: "gifs/lunges.gif", description: "Leg and glute strengthening", calories: 22 },
+                    { name: "Russian Twists", duration: 120, break: 45, gif: "gifs/russiantwistfeetraised-1472133.gif", description: "Core rotational exercise", calories: 15 },
+                    { name: "Wall Sit", duration: 90, break: 0, gif: "gifs/0f343e5f49ee783888500700e162f631.gif", description: "Isometric leg strengthening", calories: 12 }
+                ]
+            },
+            difficult: {
+                title: "30-Minute Extreme Challenge",
+                totalTime: 1800, // 30 minutes
+                exercises: [
+                    { name: "Sprint Intervals", duration: 240, break: 60, gif: "gifs/dad50866bbcbf9f37530ebea36f8295d.gif", description: "High-intensity cardio blast", calories: 40 },
+                    { name: "Advanced Burpees", duration: 180, break: 60, gif: "gifs/burpees-icegif-1.webp", description: "Explosive full-body exercise", calories: 45 },
+                    { name: "Plyometric Push-ups", duration: 120, break: 60, gif: "gifs/pikepushup-1456956895.gif", description: "Explosive upper body power", calories: 25 },
+                    { name: "Jump Squats", duration: 180, break: 60, gif: "gifs/Jump-Squats-Gif.gif", description: "Explosive leg power", calories: 35 },
+                    { name: "Bear Crawl", duration: 150, break: 60, gif: "gifs/GRT-10.01.BearCrawl.webp", description: "Full-body strength and stability", calories: 30 },
+                    { name: "Pike Push-ups", duration: 120, break: 60, gif: "gifs/pikepushup-1456956895.gif", description: "Shoulder and core strengthening", calories: 20 },
+                    { name: "Single-leg Deadlifts", duration: 180, break: 60, gif: "gifs/Single+Leg+Deadlift.gif", description: "Balance and posterior chain", calories: 25 },
+                    { name: "Plank to Push-up", duration: 150, break: 0, gif: "gifs/fitgif-friday-planks-to-pushup-.gif", description: "Core and upper body finisher", calories: 18 }
+                ]
+            }
+        };
+
+        // Timer variables
+        let currentWorkout = null;
+        let currentExerciseIndex = 0;
+        let isRunning = false;
+        let isPaused = false;
+        let isBreak = false;
+        let totalTimeRemaining = 0;
+        let currentTimeRemaining = 0;
+        let totalCaloriesBurned = 0;
+        let timerInterval = null;
+
+        // UI elements
+        const workoutSelection = document.getElementById('workoutSelection');
+        const activeWorkout = document.getElementById('activeWorkout');
+        const workoutTitle = document.getElementById('workoutTitle');
+        const totalTimer = document.getElementById('totalTimer');
+        const currentTimer = document.getElementById('currentTimer');
+        const exerciseCount = document.getElementById('exerciseCount');
+        const progressBar = document.getElementById('progressBar');
+        const exerciseName = document.getElementById('exerciseName');
+        const exerciseGif = document.getElementById('exerciseGif');
+        const exerciseDescription = document.getElementById('exerciseDescription');
+        const caloriesBurned = document.getElementById('caloriesBurned');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const workoutStatus = document.getElementById('workoutStatus');
+
+        function selectWorkout(level) {
+            currentWorkout = workouts[level];
+            currentExerciseIndex = 0;
+            totalTimeRemaining = currentWorkout.totalTime;
+            totalCaloriesBurned = 0;
+            
+            // Hide selection, show workout
+            workoutSelection.style.display = 'none';
+            activeWorkout.classList.add('show');
+            
+            // Initialize display
+            updateDisplay();
+            setupCurrentExercise();
+            updateStatus('Ready to Start');
+        }
+
+        function setupCurrentExercise() {
+            if (currentExerciseIndex >= currentWorkout.exercises.length) {
+                completeWorkout();
+                return;
+            }
+            
+            const exercise = currentWorkout.exercises[currentExerciseIndex];
+            currentTimeRemaining = exercise.duration;
+            isBreak = false;
+            
+            exerciseName.textContent = exercise.name;
+            exerciseGif.src = exercise.gif;
+            exerciseDescription.textContent = exercise.description;
+            
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            // Update timers
+            totalTimer.textContent = formatTime(totalTimeRemaining);
+            currentTimer.textContent = formatTime(currentTimeRemaining);
+            
+            // Update exercise count
+            exerciseCount.textContent = `${currentExerciseIndex + 1} / ${currentWorkout.exercises.length}`;
+            
+            // Update progress bar
+            const progress = ((currentWorkout.totalTime - totalTimeRemaining) / currentWorkout.totalTime) * 100;
+            progressBar.style.width = progress + '%';
+            
+            // Update calories
+            caloriesBurned.textContent = Math.round(totalCaloriesBurned);
+            
+            // Update workout title
+            workoutTitle.textContent = currentWorkout.title;
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function playPause() {
+            if (!isRunning) {
+                startWorkout();
+            } else {
+                if (isPaused) {
+                    resumeWorkout();
+                } else {
+                    pauseWorkout();
+                }
+            }
+        }
+
+        function startWorkout() {
+            isRunning = true;
+            isPaused = false;
+            
+            playPauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
+            updateStatus('Running');
+            
+            timerInterval = setInterval(() => {
+                if (currentTimeRemaining > 0) {
+                    currentTimeRemaining--;
+                    totalTimeRemaining--;
+                    
+                    // Add calories progressively
+                    if (!isBreak) {
+                        const exercise = currentWorkout.exercises[currentExerciseIndex];
+                        totalCaloriesBurned += exercise.calories / exercise.duration;
+                    }
+                    
+                    updateDisplay();
+                } else {
+                    // Current phase completed
+                    if (isBreak) {
+                        // Break finished, go to next exercise
+                        currentExerciseIndex++;
+                        setupCurrentExercise();
+                    } else {
+                        // Exercise finished, start break
+                        const exercise = currentWorkout.exercises[currentExerciseIndex];
+                        if (exercise.break > 0) {
+                            startBreak(exercise.break);
+                        } else {
+                            // No break, go to next exercise
+                            currentExerciseIndex++;
+                            setupCurrentExercise();
+                        }
+                    }
+                }
+            }, 1000);
+        }
+
+        function startBreak(breakDuration) {
+            isBreak = true;
+            currentTimeRemaining = breakDuration;
+            
+            exerciseName.textContent = "Break Time!";
+            exerciseGif.src = "gifs/breaktime.jpg"; // Updated to breaktime.jpg
+            exerciseDescription.textContent = "Take a deep breath and prepare for the next exercise";
+            
+            updateStatus('Break');
+            updateDisplay();
+        }
+
+        function pauseWorkout() {
+            isPaused = true;
+            clearInterval(timerInterval);
+            playPauseBtn.innerHTML = '<i class="fas fa-play"></i> Resume';
+            updateStatus('Paused');
+        }
+
+        function resumeWorkout() {
+            isPaused = false;
+            playPauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
+            updateStatus(isBreak ? 'Break' : 'Running');
+            
+            timerInterval = setInterval(() => {
+                if (currentTimeRemaining > 0) {
+                    currentTimeRemaining--;
+                    totalTimeRemaining--;
+                    
+                    if (!isBreak) {
+                        const exercise = currentWorkout.exercises[currentExerciseIndex];
+                        totalCaloriesBurned += exercise.calories / exercise.duration;
+                    }
+                    
+                    updateDisplay();
+                } else {
+                    if (isBreak) {
+                        currentExerciseIndex++;
+                        setupCurrentExercise();
+                    } else {
+                        const exercise = currentWorkout.exercises[currentExerciseIndex];
+                        if (exercise.break > 0) {
+                            startBreak(exercise.break);
+                        } else {
+                            currentExerciseIndex++;
+                            setupCurrentExercise();
+                        }
+                    }
+                }
+            }, 1000);
+        }
+
+        function resetWorkout() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            isPaused = false;
+            isBreak = false;
+            currentExerciseIndex = 0;
+            totalTimeRemaining = currentWorkout.totalTime;
+            totalCaloriesBurned = 0;
+            
+            playPauseBtn.innerHTML = '<i class="fas fa-play"></i> Start';
+            updateStatus('Ready to Start');
+            setupCurrentExercise();
+        }
+
+        function skipExercise() {
+            if (isRunning) {
+                if (isBreak) {
+                    // Skip break, go to next exercise
+                    currentExerciseIndex++;
+                    setupCurrentExercise();
+                } else {
+                    // Skip current exercise, go to break or next exercise
+                    const exercise = currentWorkout.exercises[currentExerciseIndex];
+                    if (exercise.break > 0) {
+                        startBreak(exercise.break);
+                    } else {
+                        currentExerciseIndex++;
+                        setupCurrentExercise();
+                    }
+                }
+            }
+        }
+
+        function goBack() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            isPaused = false;
+            
+            // Hide workout, show selection
+            activeWorkout.classList.remove('show');
+            workoutSelection.style.display = 'block';
+            
+            // Reset variables
+            currentWorkout = null;
+            currentExerciseIndex = 0;
+            totalCaloriesBurned = 0;
+        }
+
+        function completeWorkout() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            
+            exerciseName.textContent = "Workout Complete!";
+            exerciseGif.src = "gifs/download (1).jpg"; // Updated to download (1).jpg
+            exerciseDescription.textContent = "Congratulations! You've completed your workout. Great job!";
+            
+            playPauseBtn.innerHTML = '<i class="fas fa-trophy"></i> Completed';
+            playPauseBtn.disabled = true;
+            
+            updateStatus('Completed');
+            
+            // Show completion animation
+            setTimeout(() => {
+                playPauseBtn.disabled = false;
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i> Start';
+            }, 3000);
+        }
+
+        function updateStatus(status) {
+            workoutStatus.textContent = status;
+            
+            // Update status indicator
+            statusIndicator.className = 'status-indicator';
+            switch(status) {
+                case 'Running':
+                    statusIndicator.classList.add('status-running');
+                    break;
+                case 'Paused':
+                    statusIndicator.classList.add('status-paused');
+                    break;
+                case 'Break':
+                    statusIndicator.classList.add('status-break');
+                    break;
+                case 'Completed':
+                    statusIndicator.classList.add('status-completed');
+                    break;
+                default:
+                    statusIndicator.classList.add('status-paused');
+            }
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add some interactive elements
+            const workoutBtns = document.querySelectorAll('.workout-btn');
+            workoutBtns.forEach(btn => {
+                btn.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-5px) scale(1.02)';
+                });
+                btn.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+
+            // Add keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if (activeWorkout.classList.contains('show')) {
+                    switch(e.code) {
+                        case 'Space':
+                            e.preventDefault();
+                            playPause();
+                            break;
+                        case 'KeyR':
+                            e.preventDefault();
+                            resetWorkout();
+                            break;
+                        case 'KeyS':
+                            e.preventDefault();
+                            skipExercise();
+                            break;
+                        case 'Escape':
+                            e.preventDefault();
+                            goBack();
+                            break;
+                    }
+                }
+            });
+
+            // Add smooth scrolling for mobile
+            if (window.innerWidth <= 768) {
+                document.body.style.overflowX = 'hidden';
+            }
+        });
+
+        // Add some visual feedback for mobile touches
+        document.addEventListener('touchstart', function(e) {
+            if (e.target.classList.contains('workout-btn') || e.target.classList.contains('control-btn')) {
+                e.target.style.transform = 'scale(0.95)';
+            }
+        });
+
+        document.addEventListener('touchend', function(e) {
+            if (e.target.classList.contains('workout-btn') || e.target.classList.contains('control-btn')) {
+                setTimeout(() => {
+                    e.target.style.transform = '';
+                }, 150);
+            }
+        });
+    </script>
+</body>
+</html>
