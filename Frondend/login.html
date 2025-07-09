@@ -11,7 +11,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
       padding: 20px;
     }
 
@@ -168,7 +168,7 @@
             id="email" 
             name="email" 
             placeholder="Enter your email"
-            value="demo@medimind.com"
+
             required
           />
         </div>
@@ -180,7 +180,6 @@
             id="password" 
             name="password" 
             placeholder="Enter your password"
-            value="demo123"
             required
           />
         </div>
@@ -189,8 +188,6 @@
           Sign In to Dashboard
         </button>
       </form>
-
-      <a href="#" class="forgot-password">Forgot your password?</a>
 
     </div>
   </div>
@@ -240,13 +237,6 @@
         }, 2000);
       }
     }
-
-    // Check if already logged in
-    window.onload = function() {
-      if (localStorage.getItem('medimind_logged_in') === 'true') {
-        window.location.href = '/dashboard';
-      }
-    };
   </script>
 </body>
 </html>
