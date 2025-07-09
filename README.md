@@ -1,5 +1,5 @@
 
-__Medimind__!
+# Medimind!
 
 ![Medimind Login Page](image/1.png "Medimind Login Page")
 💡 Project Overview
