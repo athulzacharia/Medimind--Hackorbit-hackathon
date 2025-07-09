@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Appointment Reminder</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* General Styles - Reusing from existing design */
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #2c3e50; /* Dark blue background for the entire body */
+      margin: 0;
+      display: flex;
+      min-height: 100vh;
+      color: #333;
+    }
+
+    .container {
+      display: flex;
+      width: 100%;
+    }
+
+    .sidebar {
+      width: 20%;
+      background-color: #2c3e50; /* Dark blue */
+      color: white;
+      padding: 12px 0;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+      height: 100vh; /* Full height */
+      position: fixed; /* Keep sidebar fixed */
+      top: 0;
+      left: 0;
+      min-width: 180px;
+      overflow-y: auto; /* Enable scrolling if content overflows */
+    }
+
+    .sidebar h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #ecf0f1; /* Light grey */
+      font-size: 1.8em;
+    }
+
+    .sidebar ul {
+      list-style: none;
+    }
+
+    .sidebar ul li {
+      padding: 12px 0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+      padding-left: 10px;
+    }
+
+    .sidebar ul li:hover {
+      background-color: #34495e; /* Slightly lighter dark blue */
+      transform: translateX(5px);
+    }
+
+    .sidebar ul li.active {
+      background-color: #3498db; /* Blue for active item */
+      font-weight: bold;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .main-content {
+      margin-left: 250px; /* Offset for fixed sidebar */
+      flex-grow: 1;
+      padding: 20px;
+      background-color: #34495e; /* Darker background for main content */
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+      background-color: #2c3e50; /* Darker topbar to blend with sidebar */
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    .topbar input[type="text"] {
+      flex-grow: 1;
+      padding: 10px 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 1rem;
+      margin-right: 15px;
+      background-color: #3e5060; /* Slightly lighter input background */
+      color: white;
+    }
+
+    .topbar input[type="text"]::placeholder {
+        color: #bbb;
+    }
+
+    .profile-btn {
+      background-color: #3498db;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      transition: background-color 0.3s ease;
+    }
+
+    .profile-btn:hover {
+      background-color: #2980b9;
+    }
+
+    .profile-btn i {
+      margin-left: 8px;
+    }
+
+    /* Specific styles for Appointment Reminder - Adjusted to match Pill Reminder */
+    .appointment-container { /* Renamed from pill-reminder-container for clarity */
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.05); /* Slightly transparent background */
+      border-radius: 20px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    }
+
+    .section-card { /* Renamed from add-reminder-card for clarity */
+        background: rgba(0, 0, 0, 0.3); /* Darker background for sections */
+        border-radius: 8px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .section-card h3 {
+        color: #00f0ff; /* Light blue for headings */
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .form-group label {
+        color: #e0e0e0; /* Lighter text for labels */
+    }
+
+    .form-group input[type="text"],
+    .form-group input[type="time"],
+    .form-group input[type="tel"],
+    .form-group select {
+        background: rgba(0, 0, 0, 0.3); /* Transparent input background */
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white; /* White text for inputs */
+        padding: 10px 15px; /* Adjusted padding */
+        border-radius: 8px; /* Rounded corners */
+    }
+
+    .form-group input[type="text"]:focus,
+    .form-group input[type="time"]:focus,
+    .form-group input[type="tel"]:focus,
+    .form-group select:focus {
+        border-color: #00f0ff; /* Focus border color */
+        box-shadow: 0 0 0 2px rgba(0, 240, 255, 0.3); /* Focus shadow */
+    }
+
+    .form-group input::placeholder {
+      color: rgba(255, 255, 255, 0.6); /* Placeholder color */
+    }
+
+    .add-reminder-btn {
+        background: linear-gradient(to right, #00f0ff, #00d0e0); /* Pill reminder button gradient */
+        color: black; /* Black text for button */
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        padding: 15px; /* Adjusted padding */
+        border-radius: 8px; /* Rounded corners */
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .add-reminder-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 10px rgba(0, 240, 255, 0.3);
+    }
+
+    .appointments-list h3 {
+        color: #00f0ff; /* Light blue for headings */
+    }
+
+    .appointment-item {
+        background: rgba(255, 255, 255, 0.1); /* Lighter transparent background for items */
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: white; /* White text for appointment items */
+    }
+
+    .appointment-item h4 {
+        color: white; /* White text for appointment title */
+    }
+
+    .appointment-item p {
+        color: rgba(255, 255, 255, 0.7); /* Lighter text for details */
+    }
+
+    .appointment-actions button {
+        background-color: #e74c3c; /* Red for delete */
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: background-color 0.3s ease;
+    }
+
+    .appointment-actions button:hover {
+        background-color: #c0392b; /* Darker red */
+    }
+
+    .no-appointments-message {
+        text-align: center;
+        color: #aaa; /* Lighter grey for no appointments message */
+        padding: 20px;
+        background: rgba(0, 0, 0, 0.2); /* Transparent background */
+        border-radius: 8px;
+        margin-top: 20px;
+    }
+
+    /* Styles for the status message container */
+    #status-message-container {
+        text-align: center;
+        margin-bottom: 20px;
+        position: relative;
+        z-index: 10;
+        padding: 10px;
+        background: rgba(0, 0, 0, 0.7);
+        border-radius: 8px;
+        color: white;
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+        width: fit-content;
+        margin-left: auto;
+        margin-right: auto;
+        transform: translateY(-10px);
+    }
+    #status-message-container.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    #status-message {
+        font-size: 1.1em;
+        font-weight: bold;
+    }
+
+    /* Styles for the appointment alert pop-up */
+    #appointment-alert-message-container {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 1000;
+        padding: 30px;
+        background: linear-gradient(to right, #00f0ff, #00d0e0); /* Blue gradient matching pill reminder */
+        color: black; /* Black text for contrast */
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 240, 255, 0.6); /* Glowing shadow */
+        text-align: center;
+        font-size: 1.8em;
+        font-weight: bold;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out, transform 0.5s ease-in-out;
+        max-width: 90%;
+        width: 400px;
+        box-sizing: border-box;
+    }
+
+    #appointment-alert-message-container.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    #appointment-alert-message-container .close-btn {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        font-size: 1.2em;
+        cursor: pointer;
+        color: black; /* Black close button */
+        background: none;
+        border: none;
+        padding: 5px;
+        border-radius: 50%;
+        line-height: 1;
+    }
+    #appointment-alert-message-container .close-btn:hover {
+        background: rgba(0,0,0,0.1);
+    }
+
+    /* Styles for the notification permission card */
+    .notification-permission-card {
+        background-color: rgba(0, 0, 0, 0.3); /* Dark transparent background */
+        color: white; /* White text */
+    }
+
+    .notification-permission-card h3 {
+        color: #00f0ff; /* Light blue heading */
+    }
+
+    .notification-permission-card button {
+        background-color: #00f0ff; /* Blue button */
+        color: black; /* Black text */
+    }
+    .notification-permission-card button:hover {
+        background-color: #00d0e0; /* Darker blue on hover */
+    }
+
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        box-shadow: none;
+      }
+      .main-content {
+        margin-left: 0;
+        padding-top: 0;
+      }
+      .topbar {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 10px;
+      }
+      .topbar input[type="text"] {
+        margin-right: 0;
+        margin-bottom: 10px;
+      }
+      .form-row {
+        flex-direction: column;
+        gap: 0;
+      }
+      .form-row > .form-group {
+        margin-bottom: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <aside class="sidebar">
+      <h2>🏥 MediMind</h2>
+      <ul>
+        <li onclick="navigate('index.html')">🏠 Dashboard</li>
+        <li onclick="navigate('upload.html')">📁 Upload Records</li>
+        <li onclick="navigate('analytics.html')">📊 Health Analytics</li>
+        <li onclick="navigate('aidoc.html')">👩🏻‍⚕️ AI Doctor</li>
+        <li onclick="navigate('chatbot.html')">🤖 Chatbot</li>
+        <li onclick="navigate('pill.html')">💊 Pill Reminder</li>
+        <li onclick="navigate('appointment.html')" class="active">📅 Appointment Reminder</li>
+        <li onclick="navigate('workout.html')">🏋️‍♂️ Workout</li>
+        <li onclick="navigate('stress_relief_game.html')">🎮 Game</li>
+        <li onclick="navigate('emotion_tracker.html')">😊 Emotional Well-being</li>
+        
+      </ul>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <input type="text" placeholder="Search health records..." />
+        <button class="profile-btn">Neha 👤</button>
+      </header>
+
+      <div class="appointment-container">
+        <h2 class="text-3xl font-bold mb-6 text-center text-white">Appointment Reminders</h2>
+
+        <div id="status-message-container">
+            <p id="status-message" class="text-center"></p>
+        </div>
+
+        <div id="appointment-alert-message-container">
+            <button class="close-btn" onclick="hideAppointmentAlert()">&times;</button>
+            <p id="appointment-alert-message"></p>
+        </div>
+
+        <div class="section-card bg-gray-800 p-6 rounded-xl shadow-lg mb-8">
+          <h3 class="text-2xl font-semibold mb-5 text-white">Add New Appointment</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div class="form-group">
+              <label for="appointmentTitle">Title:</label>
+              <input type="text" id="appointmentTitle" placeholder="e.g., Dentist Visit" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label for="appointmentLocation">Location:</label>
+              <input type="text" id="appointmentLocation" placeholder="e.g., City Clinic" class="form-input">
+            </div>
+            <div class="form-group">
+              <label for="appointmentTime">Time:</label>
+              <input type="time" id="appointmentTime" value="12:30" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label for="appointmentFrequency">Frequency:</label>
+              <select id="appointmentFrequency" class="form-input" required>
+                <option value="Once">Once</option>
+                <option value="Daily">Daily</option>
+                <option value="Weekly">Weekly</option>
+                <option value="Monthly">Monthly</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group mb-6">
+            <label class="text-gray-300 text-sm font-bold mb-2" for="appointmentPhone">Phone Number (with country code):</label>
+            <input type="tel" id="appointmentPhone" placeholder="+1XXXXXXXXXX" class="form-input">
+            <p class="text-xs text-gray-400 mt-1">For SMS alerts, enter your phone number with country code (e.g., +91 for India). During Twilio trial, only verified numbers can receive SMS.</p>
+          </div>
+          <button class="add-reminder-btn w-full py-3 rounded-lg font-bold text-lg" onclick="addAppointment()">Add Reminder</button>
+        </div>
+
+        <div class="section-card your-reminders-card bg-gray-800 p-6 rounded-xl shadow-lg">
+          <h3 class="text-2xl font-semibold mb-5 text-white">Your Appointments</h3>
+          <div id="appointmentsListContainer">
+            <!-- Appointments will be loaded here by JavaScript -->
+            <p class="no-appointments-message" id="noAppointmentsMessage">No appointments set yet. Add one above!</p>
+          </div>
+        </div>
+        
+        <div class="section-card notification-permission-card bg-gray-800 p-6 rounded-xl shadow-lg mb-8 text-center">
+            <h3 class="text-xl font-semibold mb-3 text-white">Enable Browser Notifications</h3>
+            <p id="notification-status" class="text-gray-300 mb-4">Notifications: Not requested.</p>
+            <button onclick="requestNotificationPermissionAndPlaySound()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition duration-200">
+                Enable Notifications & Test Sound
+            </button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function navigate(page) {
+      window.location.href = page;
+    }
+
+    let appointments = []; // This will store appointments fetched from the backend
+
+    // --- Notification Sound ---
+    // Ensure you have a 'sounds' directory in your 'frontend' directory and a 'notification.mp3' file inside it.
+    // The Flask app.py is configured to serve files from a 'sounds' directory at '/sounds/<filename>'.
+    const notificationSound = new Audio('/sounds/notifications.mp3'); 
+
+    // --- Browser Notification Permission ---
+    async function requestNotificationPermission() {
+        if (!("Notification" in window)) {
+            console.warn("This browser does not support desktop notification");
+            document.getElementById('notification-status').textContent = 'Notifications: Not supported by this browser.';
+            document.getElementById('notification-status').style.color = 'red';
+            return false;
+        }
+
+        if (Notification.permission === "granted") {
+            document.getElementById('notification-status').textContent = 'Notifications: Granted.';
+            document.getElementById('notification-status').style.color = 'green';
+            return true;
+        }
+
+        if (Notification.permission === "denied") {
+            document.getElementById('notification-status').textContent = 'Notifications: Denied. Please enable in browser settings.';
+            document.getElementById('notification-status').style.color = 'orange';
+            return false;
+        }
+
+        const permission = await Notification.requestPermission();
+        if (permission === "granted") {
+            document.getElementById('notification-status').textContent = 'Notifications: Granted.';
+            document.getElementById('notification-status').style.color = 'green';
+            return true;
+        } else {
+            document.getElementById('notification-status').textContent = 'Notifications: Denied.';
+            document.getElementById('notification-status').style.color = 'orange';
+            return false;
+        }
+    }
+
+    async function requestNotificationPermissionAndPlaySound() {
+        const granted = await requestNotificationPermission();
+        if (granted) {
+            notificationSound.play().catch(e => console.error("Error playing sound:", e));
+            new Notification('Test Appointment Notification!', {
+                body: 'This is a test notification from MediMind Appointment Reminder.',
+                icon: 'https://placehold.co/64x64/00f0ff/000000?text=📅' // Changed icon to match pill.html style
+            });
+        }
+    }
+
+    // --- Custom In-Browser Pop-up Alert ---
+    function showAppointmentAlert(title, location, time) {
+        const alertContainer = document.getElementById('appointment-alert-message-container');
+        const alertMessage = document.getElementById('appointment-alert-message');
+        
+        alertMessage.innerHTML = `Upcoming Appointment: <strong>${title}</strong><br>Time: ${formatTime12hr(time)}<br>${location ? `Location: ${location}` : ''}`;
+        alertContainer.classList.add('show');
+        notificationSound.play().catch(e => console.error("Error playing sound (scheduled):", e));
+
+        setTimeout(() => {
+            hideAppointmentAlert();
+        }, 10000); // Hide after 10 seconds automatically
+    }
+
+    function hideAppointmentAlert() {
+        const alertContainer = document.getElementById('appointment-alert-message-container');
+        alertContainer.classList.remove('show');
+    }
+
+    // --- Web (Desktop) Notification ---
+    function showWebNotification(title, location, time) {
+        if (Notification.permission === "granted") {
+            new Notification('Appointment Reminder!', {
+                body: `Time for your ${title} at ${formatTime12hr(time)}. ${location ? `Location: ${location}.` : ''}`,
+                icon: 'https://placehold.co/64x64/00f0ff/000000?text=📅' // Changed icon to match pill.html style
+            });
+            notificationSound.play().catch(e => console.error("Error playing sound (scheduled):", e));
+        } else {
+            console.warn("Notification permission not granted. Cannot show web notification.");
+            document.getElementById('notification-status').textContent = 'Notifications: Permission not granted. Click "Enable Notifications" button.';
+            document.getElementById('notification-status').style.color = 'orange';
+        }
+    }
+
+    // --- SMS Notification via Flask Backend ---
+    async function sendSmsNotification(toPhoneNumber, messageBody) {
+        try {
+            const response = await fetch('/send_sms', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    to_phone_number: toPhoneNumber,
+                    message_body: messageBody
+                })
+            });
+            const result = await response.json();
+            if (response.ok) {
+                console.log('SMS API Success:', result.message);
+            } else {
+                console.error('SMS API Error:', result.error);
+            }
+        } catch (error) {
+            console.error('Network error sending SMS:', error);
+        }
+    }
+
+    // Helper function to convert 24-hour time to 12-hour (AM/PM) format
+    function formatTime12hr(time24hr) {
+        if (!time24hr) return 'N/A';
+        const [hours, minutes] = time24hr.split(':').map(Number);
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const formattedHours = hours % 12 || 12; // Convert 0 to 12 for AM/PM
+        return `${formattedHours}:${String(minutes).padStart(2, '0')} ${ampm}`;
+    }
+
+    // --- Appointment Management (Frontend & Backend Interaction) ---
+    async function addAppointment() {
+      const title = document.getElementById('appointmentTitle').value;
+      const location = document.getElementById('appointmentLocation').value;
+      const time = document.getElementById('appointmentTime').value;
+      const frequency = document.getElementById('appointmentFrequency').value;
+      const phone = document.getElementById('appointmentPhone').value;
+
+      const statusMessageElement = document.getElementById('status-message');
+      const statusMessageContainer = document.getElementById('status-message-container');
+
+      if (!title || !time || !frequency) {
+        statusMessageElement.textContent = 'Please fill in all required fields: Title, Time, and Frequency.';
+        statusMessageElement.style.color = 'red';
+        statusMessageContainer.classList.add('show');
+        setTimeout(() => statusMessageContainer.classList.remove('show'), 3000);
+        return;
+      }
+
+      try {
+        const response = await fetch('/add_appointment', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ title, location, time, frequency, phone }),
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+          statusMessageElement.textContent = result.message;
+          statusMessageElement.style.color = 'green';
+          statusMessageContainer.classList.add('show');
+          setTimeout(() => statusMessageContainer.classList.remove('show'), 3000);
+          clearAppointmentForm();
+          fetchAppointments(); // Refresh the list from backend
+        } else {
+          statusMessageElement.textContent = 'Error: ' + result.error;
+          statusMessageElement.style.color = 'red';
+          statusMessageContainer.classList.add('show');
+          setTimeout(() => statusMessageContainer.classList.remove('show'), 3000);
+        }
+      } catch (error) {
+        console.error('Error adding appointment:', error);
+        statusMessageElement.textContent = 'An error occurred while adding the appointment.';
+        statusMessageElement.style.color = 'red';
+        statusMessageContainer.classList.add('show');
+        setTimeout(() => statusMessageContainer.classList.remove('show'), 3000);
+      }
+    }
+
+    async function fetchAppointments() {
+      try {
+        const response = await fetch('/appointments');
+        const fetchedAppointments = await response.json();
+        
+        // Update the local 'appointments' array with fetched data
+        // Add a 'lastTriggered' property to each fetched appointment for client-side tracking
+        appointments = fetchedAppointments.map(app => ({
+            ...app,
+            lastTriggered: null // Initialize client-side lastTriggered
+        }));
+
+        const container = document.getElementById('appointmentsListContainer');
+        container.innerHTML = ''; // Clear existing list
+
+        if (appointments.length === 0) {
+          container.innerHTML = '<p class="no-appointments-message" id="noAppointmentsMessage">No appointments set yet. Add one above!</p>';
+        } else {
+          appointments.forEach(appointment => {
+            const appointmentItem = document.createElement('div');
+            appointmentItem.classList.add('appointment-item', 'bg-gray-700', 'p-4', 'rounded-lg', 'mb-3', 'flex', 'justify-between', 'items-center'); // Added classes for pill reminder item style
+            appointmentItem.innerHTML = `
+                <div>
+                    <p class="font-bold text-lg">${appointment.title}</p>
+                    <p class="text-sm text-gray-300">Time: ${formatTime12hr(appointment.time)} | Location: ${appointment.location || 'N/A'} | Frequency: ${appointment.frequency}</p>
+                    ${appointment.phone ? `<p class="text-xs text-gray-400">SMS to: ${appointment.phone}</p>` : ''}
+                </div>
+                <button class="delete-reminder-btn bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md transition duration-200" onclick="deleteAppointment(${appointment.id})">Delete</button>
+            `;
+            container.appendChild(appointmentItem);
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching appointments:', error);
+        const container = document.getElementById('appointmentsListContainer');
+        container.innerHTML = '<p class="no-appointments-message">Failed to load appointments. Please try again later.</p>';
+      }
+    }
+
+    async function deleteAppointment(id) {
+      // Using a custom modal for confirmation instead of alert()
+      const confirmDelete = await showCustomConfirm('Are you sure you want to delete this appointment?');
+      if (!confirmDelete) {
+        return; // User cancelled
+      }
+
+      const statusMessageElement = document.getElementById('status-message');
+      const statusMessageContainer = document.getElementById('status-message-container');
+
+      try {
+        const response = await fetch(`/delete_appointment/${id}`, {
+          method: 'DELETE',
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+          statusMessageElement.textContent = result.message;
+          statusMessageElement.style.color = 'green';
+          statusMessageContainer.classList.add('show');
+          setTimeout(() => statusMessageContainer.classList.remove('show'), 3000);
+          fetchAppointments(); // Refresh the list
+        } else {
+          statusMessageElement.textContent = 'Error: ' + result.error;
+          statusMessageElement.style.color = 'red';
+          statusMessageContainer.classList.add('show');
+          setTimeout(() => statusMessageContainer.classList.remove('show'), 3000);
+        }
+      } catch (error) {
+        console.error('Error deleting appointment:', error);
+        statusMessageElement.textContent = 'An error occurred while deleting the appointment.';
+        statusMessageElement.style.color = 'red';
+        statusMessageContainer.classList.add('show');
+        setTimeout(() => statusMessageContainer.classList.remove('show'), 3000);
+      }
+    }
+
+    function clearAppointmentForm() {
+      document.getElementById('appointmentTitle').value = '';
+      document.getElementById('appointmentLocation').value = '';
+      document.getElementById('appointmentTime').value = '12:30'; // Reset to default
+      document.getElementById('appointmentFrequency').value = 'Once'; // Reset to default
+      document.getElementById('appointmentPhone').value = '';
+    }
+
+    // --- Custom Confirmation Modal (replaces window.confirm) ---
+    function showCustomConfirm(message) {
+        return new Promise((resolve) => {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center;
+                z-index: 1001;
+            `;
+            modal.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 10px; text-align: center; max-width: 400px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+                    <p style="font-size: 1.2em; margin-bottom: 20px; color: #333;">${message}</p>
+                    <button id="confirmYes" style="background-color: #2ecc71; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">Yes</button>
+                    <button id="confirmNo" style="background-color: #e74c3c; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">No</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            document.getElementById('confirmYes').onclick = () => {
+                document.body.removeChild(modal);
+                resolve(true);
+            };
+            document.getElementById('confirmNo').onclick = () => {
+                document.body.removeChild(modal);
+                resolve(false);
+            };
+        });
+    }
+
+    // --- Appointment Scheduling (Client-side) ---
+    setInterval(() => {
+        const now = new Date();
+        const currentHour = String(now.getHours()).padStart(2, '0');
+        const currentMinute = String(now.getMinutes()).padStart(2, '0');
+        const currentTime24hr = `${currentHour}:${currentMinute}`;
+
+        appointments.forEach(appointment => {
+            // Check if reminder time matches current time and hasn't been triggered in the last minute
+            // This client-side 'lastTriggered' is for preventing multiple pop-ups within the same minute
+            if (appointment.time === currentTime24hr) {
+                const lastTriggeredTime = appointment.lastTriggered ? new Date(appointment.lastTriggered) : null;
+                const oneMinuteAgo = new Date(now.getTime() - 60 * 1000);
+
+                if (!lastTriggeredTime || lastTriggeredTime < oneMinuteAgo) {
+                    console.log(`Time for ${appointment.title}! Triggering notifications.`);
+                    
+                    // Show the in-browser alert
+                    showAppointmentAlert(appointment.title, appointment.location, appointment.time);
+                    
+                    // Show web notification (desktop push notification)
+                    showWebNotification(appointment.title, appointment.location, appointment.time);
+
+                    if (appointment.phone) {
+                        const smsMessage = `MediMind Appointment Reminder: Your appointment for ${appointment.title} is at ${formatTime12hr(appointment.time)}. ${appointment.location ? `Location: ${appointment.location}.` : ''}`;
+                        sendSmsNotification(appointment.phone, smsMessage);
+                    }
+
+                    // Update lastTriggered timestamp to prevent immediate re-trigger
+                    appointment.lastTriggered = now.toISOString();
+                    // No need to re-display reminders here as it's an in-memory update for triggering logic
+                }
+            }
+            // For 'Weekly' or 'Monthly' frequencies, more complex date logic would be needed here.
+            // For simplicity, this example primarily focuses on 'Daily' or 'Once' (by matching time).
+        });
+    }, 10 * 1000); // Check every 10 seconds
+
+    // Initial load and permission request
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchAppointments(); // Load appointments from backend
+      requestNotificationPermission(); // Request notification permission on load
+    });
+  </script>
+</body>
+</html>
