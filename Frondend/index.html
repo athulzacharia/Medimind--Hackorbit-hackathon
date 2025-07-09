@@ -201,27 +201,31 @@
 <body>
   <div class="container">
     <aside class="sidebar">
-      <h2>MediMind</h2>
+      <h2>🏥 MediMind</h2>
       <ul>
         <li onclick="navigate('index.html')" class="active">🏠 Dashboard</li>
         <li onclick="navigate('upload.html')">📁 Upload Records</li>
         <li onclick="navigate('analytics.html')">📊 Health Analytics</li>
-        <li onclick="navigate('pill.html')">💊 Pill Reminder</li>
+        <li onclick="navigate('aidoc.html')">👩🏻‍⚕️ AI Doctor</li>
         <li onclick="navigate('chatbot.html')">🤖 Chatbot</li>
+        <li onclick="navigate('pill.html')">💊 Pill Reminder</li>
+        <li onclick="navigate('appointment.html')">📅 Appointment Reminder</li>
         <li onclick="navigate('workout.html')">🏋️‍♂️ Workout</li>
+        <li onclick="navigate('stress_relief_game.html')">🎮 Game</li>
+        <li onclick="navigate('emotion_tracker.html')">😊 Emotional Well-being</li>
       </ul>
     </aside>
 
     <main class="main-content">
       <header class="topbar">
         <input type="text" id="searchInput" placeholder="Search health records..." onkeyup="searchRecords()" />
-        <button class="profile-btn" onclick="showProfile()">Neha 👤</button>
+        <button class="profile-btn" onclick="showProfile()">User 👤</button>
       </header>
 
       <div class="dashboard-main">
         <!-- Welcome Section -->
         <div class="welcome-section">
-          <h1>Welcome back, Neha! 👋</h1>
+          <h1>Welcome back, User! 👋</h1>
           <p>Here's your health overview for today. Stay on top of your wellness journey.</p>
           <div id="currentDateTime"></div>
         </div>
@@ -261,23 +265,8 @@
 
         <!-- Quick Actions -->
         <div class="quick-actions">
-          <button class="action-btn" onclick="navigate('upload.html')">
-            📁 Upload New Record
-          </button>
-          <button class="action-btn secondary" onclick="navigate('analytics.html')">
-            📊 View Analytics
-          </button>
-          <button class="action-btn success" onclick="navigate('pill.html')">
-            💊 Pill Reminder
-          </button>
-          <button class="action-btn warning" onclick="navigate('chatbot.html')">
-            🤖 Ask Health Bot
-          </button>
           <button class="action-btn" onclick="exportHealthData()">
             📤 Export Data
-          </button>
-          <button class="action-btn secondary" onclick="scheduleAppointment()">
-            📅 Schedule Appointment
           </button>
         </div>
 
